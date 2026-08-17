@@ -4,19 +4,30 @@
 
 This project provides a **modular package of reusable skills** for working with different Microsoft cloud service APIs. The goal is to generalize and abstract the connection patterns, authentication flows, and API interaction models observed across diverse Microsoft cloud automation scenarios into a cohesive, reusable toolkit.
 
-**Core Principle**: No secret material is embedded in any skill. All skills require explicit secret management through environment variables, Azure Key Vault, or managed identity, with clear prerequisites documented per skill.
+**Core Principle**: No secret material is embedded in any skill. All skills require explicit secret management through the approved hierarchy, with clear prerequisites documented per skill.
 
 ---
 
 ## Scope and Service Coverage
 
-| Service Domain | APIs | Key Patterns |
-|----------------|------|--------------|
-| **Microsoft Graph** | `graph.microsoft.com` (commercial), `graph.microsoft.us` (USGov), `graph.microsoft.cn` (China) | Device code, client credentials, certificate-based auth, delegated permissions, app-only tokens |
-| **Azure Resource Manager** | `management.azure.com`, Bicep, Azure CLI | Service principal auth, managed identity, federated credentials (OIDC), ARM template deployment |
-| **Dataverse / Power Platform** | `*.crm.dynamics.com`, BAP API (`api.bap.microsoft.com`) | OAuth2 client_credentials, environment discovery via Global Discovery Service, Web API OData |
-| **Copilot Studio** | Dataverse-backed (bot/botcomponent entities), PAC CLI | Agent deployment, knowledge source management, privilege/role automation |
-| **Azure Monitor / Log Analytics** | Data Collection Endpoint ingestion | Bearer token acquisition for `https://monitor.azure.com/` |
+| Service Domain | Status | Skill Doc |
+|----------------|--------|-----------|
+| **Microsoft Graph** | Covered | [skills/graph/SKILL.md](skills/graph/SKILL.md) |
+| **Azure Resource Manager** | Covered | [skills/azure/SKILL.md](skills/azure/SKILL.md) |
+| **Dataverse** | Covered | [skills/dataverse/SKILL.md](skills/dataverse/SKILL.md) |
+| **Power Platform / BAP** | Covered | [skills/powerplatform/SKILL.md](skills/powerplatform/SKILL.md) |
+| **Copilot Studio** | Covered | [skills/copilotstudio/SKILL.md](skills/copilotstudio/SKILL.md) |
+| **Microsoft Sentinel** | Covered | [skills/sentinel/SKILL.md](skills/sentinel/SKILL.md) |
+| **Log Analytics** | Covered | [skills/loganalytics/SKILL.md](skills/loganalytics/SKILL.md) |
+| **Microsoft Teams** | Covered | [skills/teams/SKILL.md](skills/teams/SKILL.md) |
+| **Intune / Endpoint Manager** | Covered | [skills/intune/SKILL.md](skills/intune/SKILL.md) |
+| **VM Guest Management** | Covered | [skills/vm-guest-management/SKILL.md](skills/vm-guest-management/SKILL.md) |
+| **SharePoint Online** | Gap | [agents.md#documented-gaps](#documented-gaps) |
+| **Microsoft Purview** | Gap | [agents.md#documented-gaps](#documented-gaps) |
+| **Microsoft Defender** | Gap | [agents.md#documented-gaps](#documented-gaps) |
+| **Microsoft Fabric / Power BI** | Gap | [agents.md#documented-gaps](#documented-gaps) |
+| **Azure DevOps** | Gap | [agents.md#documented-gaps](#documented-gaps) |
+| **Exchange Online** | Gap | [agents.md#documented-gaps](#documented-gaps) |
 
 ---
 
@@ -27,172 +38,140 @@ Each skill is designed as an **independent, composable unit** following PowerShe
 ```
 .
 ├── skills/
+│   ├── Common.psm1                       # Shared auth, REST, pagination, endpoint resolution
 │   ├── graph/
-│   │   ├── Connect-GraphApi.ps1          # Unified Graph connection with environment awareness
-│   │   ├── Invoke-GraphRequest.ps1       # Request wrapper with pagination, caching, throttling
+│   │   ├── SKILL.md                      # Graph-specific patterns, toolchain, examples
+│   │   ├── Connect-GraphApi.ps1
+│   │   ├── Invoke-GraphRequest.ps1
 │   │   └── auth/
-│   │       ├── DeviceCode.ps1
-│   │       ├── ClientCredentials.ps1
-│   │       ├── CertificateBased.ps1
-│   │       └── ManagedIdentity.ps1
 │   ├── azure/
-│   │   ├── Connect-AzureApi.ps1          # Azure ARM / CLI context establishment
-│   │   ├── Invoke-AzureRestMethod.ps1    # Generic Azure REST wrapper
+│   │   ├── SKILL.md                      # ARM-specific patterns, async ops, examples
+│   │   ├── Connect-AzureApi.ps1
+│   │   ├── Invoke-AzureRestMethod.ps1
 │   │   └── auth/
-│   │       ├── ServicePrincipal.ps1
-│   │       ├── FederatedCredentials.ps1
-│   │       └── ManagedIdentity.ps1
 │   ├── dataverse/
-│   │   ├── Connect-DataverseApi.ps1      # Dataverse Web API connection
-│   │   ├── Invoke-DataverseRequest.ps1   # OData request wrapper
-│   │   ├── Get-DataverseEnvironment.ps1  # Global Discovery Service lookup
+│   │   ├── SKILL.md                      # OData, GDS, file ops, examples
+│   │   ├── Connect-DataverseApi.ps1
+│   │   ├── Invoke-DataverseRequest.ps1
+│   │   ├── Get-DataverseEnvironment.ps1
 │   │   └── auth/
-│   │       └── ClientCredentials.ps1
 │   ├── powerplatform/
-│   │   ├── Connect-PowerPlatformApi.ps1  # BAP API connection
+│   │   ├── SKILL.md                      # BAP API, ARM token, examples
+│   │   ├── Connect-PowerPlatformApi.ps1
 │   │   └── Get-PowerPlatformEnvironment.ps1
-│   └── copilotstudio/
-│       ├── Deploy-CopilotAgent.ps1       # PAC CLI or Dataverse-based deployment
-│       ├── Get-CopilotAgentInfo.ps1      # Agent metadata via Dataverse
-│       └── Manage-CopilotKnowledge.ps1   # Knowledge source CRUD
+│   ├── copilotstudio/
+│   │   ├── SKILL.md                      # Dataverse bot entity, knowledge sources, examples
+│   │   ├── Deploy-CopilotAgent.ps1
+│   │   ├── Get-CopilotAgentInfo.ps1
+│   │   └── Manage-CopilotKnowledge.ps1
+│   ├── sentinel/
+│   │   ├── SKILL.md                      # ARM management plane, incidents, alert rules
+│   │   ├── Invoke-SentinelArmRequest.ps1
+│   │   ├── Get-SentinelIncident.ps1
+│   │   └── Get-SentinelAlertRule.ps1
+│   ├── loganalytics/
+│   │   ├── SKILL.md                      # KQL, workspace lifecycle, DCE/DCR, ingestion fallback
+│   │   ├── Connect-LogAnalyticsApi.ps1
+│   │   ├── Invoke-LogAnalyticsKqlQuery.ps1
+│   │   ├── New-LogAnalyticsWorkspace.ps1
+│   │   ├── New-LogAnalyticsCustomTable.ps1
+│   │   ├── New-LogAnalyticsIngestionPipeline.ps1
+│   │   ├── Send-LogAnalyticsData.ps1
+│   │   └── auth/
+│   ├── teams/
+│   │   ├── SKILL.md                      # Graph v1.0 patterns, examples
+│   │   ├── Get-TeamsChannel.ps1
+│   │   ├── Get-TeamsMember.ps1
+│   │   └── Invoke-TeamsGraphRequest.ps1
+│   ├── intune/
+│   │   ├── SKILL.md                      # v1.0 vs beta, list-vs-get, examples
+│   │   ├── Get-IntuneDevice.ps1
+│   │   ├── Get-IntuneConfigurationPolicy.ps1
+│   │   └── Invoke-IntuneGraphRequest.ps1
+│   ├── vm-guest-management/
+│   │   ├── SKILL.md                      # Run Command, Bastion, SSH, examples
+│   │   ├── Invoke-VmRunCommand.ps1
+│   │   ├── Connect-VmBastionSsh.ps1
+│   │   └── Invoke-VmSshKeyRotation.ps1
+│   ├── sharepoint-online/                # Gap — directory placeholder only
+│   │   └── SKILL.md                      # SharePoint Online gap documentation
+│   ├── powerplatform/                    # Covered
+│   └── copilotstudio/                    # Covered
 ├── prerequisites/
+│   ├── Setup-AuthenticationContext.ps1   # Guided auth method detection and setup
 │   ├── Install-RequiredModules.ps1       # Az, Microsoft.Graph, etc.
-│   └── Test-Prerequisites.ps1            # Verify auth, permissions, endpoints
-└── docs/
-    ├── auth-patterns.md                  # Decision matrix for auth method selection
-    ├── environment-endpoints.md          # Commercial vs Gov vs China endpoint mapping
-    └── secret-management.md              # .env, Key Vault, managed identity guidance
+│   └── Test-Prerequisites.ps1            # Verify environment readiness
+├── docs/
+│   ├── auth-patterns.md                  # Decision matrix for auth method selection
+│   ├── environment-endpoints.md          # Commercial vs Gov vs China endpoint mapping
+│   ├── secret-management.md              # Secret hierarchy and configuration guidance
+│   ├── token-chaining.md                 # Cross-platform token chaining patterns and examples
+│   ├── patterns-and-caveats.md           # Observed patterns, lessons learned, and edge cases
+│   ├── multi-tenant-auth.md              # Multi-tenant and multi-context authentication guidance
+│   ├── project-positioning.md            # Ecosystem positioning and unique value proposition
+│   ├── competitive-landscape.md          # Competitor and alternative analysis
+│   └── future-considerations.md          # Optional integration opportunities (not in scope)
+├── .env.example                          # Environment variable template with multi-tenant prefixes
+├── config.yaml                           # Example multi-tenant configuration file
+├── README.md                             # Project overview, quickstart, file map
+└── agents.md                             # This file — master index and design specification
 ```
 
 ---
 
-## Authentication Patterns Summary
+## Authentication Hierarchy
 
-### 1. Device Code Flow (Interactive Setup)
-- **Use Case**: Local development, initial tenant onboarding
-- **Prerequisites**: User with sufficient privileges, browser access
+All skills enforce this preference order. See [docs/auth-patterns.md](docs/auth-patterns.md) for the full decision matrix.
 
-### 2. Client Credentials (App-Only)
-- **Use Case**: CI/CD pipelines, unattended automation, service-to-service
-- **Prerequisites**: App registration, client secret or certificate, granted API permissions
+| Rank | Method | When to Use |
+|------|--------|-------------|
+| 1 | **Managed Identity** | Azure-hosted workloads (VM, Function App, App Service, Arc) |
+| 2 | **Federated Credentials (OIDC)** | GitHub Actions, Azure DevOps, GitLab CI/CD |
+| 3 | **Certificate-Based Auth** | Hybrid, on-prem, or sovereign cloud where MI/OIDC unavailable |
+| 4 | **Client Secret** | **Last resort only** — emits a mandatory runtime warning |
 
-### 3. Certificate-Based Auth
-- **Use Case**: High-security environments, government cloud, secret rotation avoidance
-- **Prerequisites**: X.509 certificate registered to app, private key access
+Interactive authentication (device code flow, browser login) is **not permitted** for skill execution.
 
-### 4. Managed Identity (System / User Assigned)
-- **Use Case**: Azure-hosted workloads (VM, Function App, Container Instance)
-- **Prerequisites**: Azure resource with managed identity enabled, role assignments
+### Normalized Authentication Parameter Set
 
-### 5. Federated Credentials (OIDC)
-- **Use Case**: GitHub Actions, Azure DevOps pipelines, short-lived token exchange
-- **Prerequisites**: Federated identity credential configured on app registration
+All `Connect-*` functions expose a consistent parameter set. See [docs/auth-patterns.md](docs/auth-patterns.md) for the full contract.
 
-### 6. Cross-Tenant / Already Authenticated
-- **Use Case**: Multi-tenant management, context switching, chained operations
-- **Prerequisites**: Valid token from home tenant, managing tenant access
-
----
-
-## Azure Multi-Tool Landscape and Token Chaining
-
-Microsoft cloud APIs can be reached through multiple overlapping toolchains. Skills must be explicit about which layer they use and when to chain tools.
-
-### Toolchain Comparison
-
-| Tool | Best For | Token Audience | Limitations |
-|------|----------|----------------|-------------|
-| **Azure CLI** (`az`) | Cross-platform scripting, Bicep/ARM deployment, quick ad-hoc commands | `https://management.azure.com/` (ARM) by default; can request tokens for other audiences via `az account get-access-token --resource` | Not available in all execution contexts (e.g., restricted containers); output parsing can be brittle |
-| **Az PowerShell modules** (`Az.Accounts`, `Az.Resources`, etc.) | Native PowerShell pipelines, object-oriented output, Azure Resource Graph | `https://management.azure.com/` (ARM) by default; `Get-AzAccessToken -ResourceTypeName MSGraph` yields Graph tokens | Heavy module dependency tree; version conflicts between `Az` and `Microsoft.Graph` modules can occur |
-| **Microsoft.Graph PowerShell SDK** (`Microsoft.Graph.*`) | Rich Graph entity coverage, strong typing, pagination handled automatically | `https://graph.microsoft.com/` (or gov/china equivalent) | Large module footprint; some beta endpoints lag behind REST API; app-only vs delegated context can be confusing |
-| **Raw REST (`Invoke-RestMethod`)** | Full control over headers, body, and URI; required for APIs without a dedicated SDK (e.g., Dataverse Web API, BAP API, Azure Monitor ingestion) | Any audience, provided you supply a valid `Authorization: Bearer <token>` header | Caller must handle pagination, throttling, retry logic, and token refresh manually |
-| **PAC CLI** (`pac`) | Power Platform / Copilot Studio solution packaging, environment management, agent deployment | Power Platform admin scope; internally handles Dataverse token acquisition | Does not expose all Dataverse entity fields; limited to supported operations |
-| **Bicep / ARM Templates** | Declarative Azure infrastructure; `what-if` validation; policy-driven compliance | ARM deployment identity (service principal or managed identity) | Imperative logic (loops, conditionals) is limited; no direct Graph or Dataverse integration |
-
-### Token Chaining: Azure → Graph → Dataverse
-
-A common and efficient pattern is to authenticate once to Azure (via Az module or Azure CLI), then use that context to acquire tokens for other Microsoft platforms without re-prompting for credentials.
-
-**Example: Az → Graph**
-```powershell
-# 1. Authenticate to Azure (ARM)
-Connect-AzAccount -TenantId $env:TENANT_ID -Subscription $env:SUBSCRIPTION_ID
-
-# 2. Acquire a Microsoft Graph access token from the Azure context
-$graphToken = (Get-AzAccessToken -ResourceTypeName MSGraph).Token
-
-# 3. Pass the token to the Graph SDK
-Connect-MgGraph -AccessToken ($graphToken | ConvertTo-SecureString -AsPlainText)
-```
-
-**Example: Azure CLI → Dataverse**
-```bash
-# 1. Log in to Azure
-az login --service-principal -u $CLIENT_ID -p $CLIENT_SECRET --tenant $TENANT_ID
-
-# 2. Request a token for the Dataverse environment audience
-az account get-access-token --resource $DATAVERSE_ENVIRONMENT_URL --query accessToken -o tsv
-```
-
-**Key Nuances**
-- **Audience mismatch is the most common failure**: `Get-AzAccessToken` without `-ResourceTypeName` returns an ARM token. Passing that to Graph or Dataverse will result in 401 Unauthorized.
-- **Token lifetime**: chained tokens are short-lived (typically 1 hour). Long-running scripts must implement refresh logic or use the SDK's built-in token management.
-- **Government cloud chaining**: When using `az account get-access-token` in USGov, ensure the CLI is logged into the correct cloud (`az cloud set --name AzureUSGovernment`) before requesting tokens; otherwise the token issuer will be wrong.
-- **Managed identity chaining**: On Azure resources, `Get-AzAccessToken` and `az account get-access-token` both work with the VM's managed identity, making token chaining possible without any client secrets.
-
-### When to Use Which Layer
-
-- **Use Azure CLI or Az PowerShell** when the primary task is Azure resource management (deployments, policy, RBAC, network).
-- **Use Microsoft.Graph SDK** when the primary task is directory, identity, or M365 data (users, groups, devices, conditional access).
-- **Use raw REST** when the target API lacks a first-class SDK (Dataverse OData, BAP, Azure Monitor ingestion, custom endpoints).
-- **Use PAC CLI** when the task is specifically Power Platform / Copilot Studio solution lifecycle management.
-- **Chain tokens** when a single script must touch multiple platforms and you want to avoid multiple interactive sign-ins or redundant secret handling.
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `-AuthenticationType` | `string` | Yes | `ManagedIdentity`, `Federated`, `Certificate`, `ClientCredentials` |
+| `-TenantId` | `string` | Conditional | Required for Federated, Certificate, ClientCredentials |
+| `-ClientId` | `string` | Conditional | Required for Federated, Certificate, ClientCredentials |
+| `-ClientSecret` | `SecureString` | Conditional | Required only for ClientCredentials |
+| `-CertificatePath` | `string` | Conditional | Required for Certificate |
+| `-CertificatePassword` | `SecureString` | Optional | Password for encrypted PFX |
+| `-FederatedToken` | `string` | Conditional | OIDC token from CI/CD platform |
+| `-UseManagedIdentity` | `switch` | No | Alias for `-AuthenticationType ManagedIdentity` |
+| `-Environment` / `-AzureEnvironment` | `string` | Yes | `AzureCloud`, `AzureUSGovernment`, `AzureChinaCloud` |
 
 ---
 
-## Secret Management Requirements
+## Multi-Tenant Authentication
 
-All skills enforce the following secret handling rules:
+Skills support multiple Entra ID tenants via:
+- **Centralized config file**: `config.yaml` with named profiles + `-Profile` parameter
+- **Prefixed environment variables**: `PROD_TENANT_ID`, `GOV_CLIENT_ID`, etc. + `-Prefix` parameter
 
-1. **Never embed secrets in code**. All credentials are parameterized.
-2. **Environment variables first**. Skills read from `$env:` / `Env:` with `.env` file support.
-3. **Azure Key Vault optional**. Skills may accept a `KeyVaultName` parameter to retrieve secrets at runtime.
-4. **Managed identity preferred on Azure**. When `UseManagedIdentity` is true, client secrets are ignored.
-5. **Certificate paths only**. Private keys are never stored in the repository; only file paths are accepted.
-
-**Required `.env` variables** (see `.env.example` for full template):
-- `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET` (or cert path)
-- `AZURE_ENVIRONMENT` (`AzureCloud`, `AzureUSGovernment`, `AzureChinaCloud`)
-- `DATAVERSE_ENVIRONMENT_URL` (for Dataverse skills)
-- `SUBSCRIPTION_ID` (for Azure ARM skills)
+See [docs/multi-tenant-auth.md](docs/multi-tenant-auth.md) for full guidance.
 
 ---
 
-## Observed Patterns and Caveats
+## Documented Gaps
 
-| Pattern Domain | Key Approach | Caveat / Lesson |
-|----------------|--------------|-----------------|
-| **Unified Connection Entry Point** | A single `Connect-*` function that branches by `AuthenticationType` (e.g., interactive, device code, managed identity, federated credentials, already-authenticated) reduces caller complexity and ensures consistent session state. | Cache directories and token stores must be explicitly managed per session; cross-tenant context switches require defensive cleanup (e.g., `try/finally` to restore original context). |
-| **Token Pass-Through Between Platforms** | Authenticating to Azure first (Az.Accounts or Azure CLI) and then calling `Get-AzAccessToken -ResourceTypeName MSGraph` to retrieve a Graph bearer token avoids duplicate credential prompts and leverages a single sign-on context. | The token audience must match the target API exactly; passing a token scoped for `https://management.azure.com/` to Graph will fail. |
-| **Dataverse Web API File Operations** | Uploading file content to Dataverse `filedata` columns should use `PATCH .../filedata`; chunked uploads require `InitializeFileBlocksUpload` → `UploadBlock` (repeated) → `CommitFileBlocksUpload`. | Using `.../filedata/$value` for uploads returns errors; that suffix is valid only for downloads. |
-| **PAC CLI Limitations** | The Power Platform CLI (`pac`) is convenient for Copilot Studio agent import/export, but it does not always apply all manifest settings (e.g., descriptions, instructions) during deployment. | Fallback to Dataverse Web API direct updates or solution XML enhancement may be required when PAC CLI leaves settings incomplete. |
-| **BAP API Permission Edge Cases** | The Business Applications Platform (BAP) API for environment enumeration and capacity checks may return 403 even when the caller holds the Dynamics 365 Service Administrator or Power Platform Admin role. | Tenant-level admin consent or explicit environment-level role assignment may be required; direct Dataverse Web API calls can sometimes bypass BAP restrictions. |
-| **Government Cloud Endpoint Mapping** | Graph, ARM, Dataverse, and BAP endpoints all change in sovereign clouds (USGov, China, Germany). | Hard-coding `graph.microsoft.com` or `management.azure.com` will fail in non-commercial clouds; all skills must resolve endpoints dynamically based on an `-Environment` parameter. |
-| **Dataverse Global Discovery Service** | Environment URLs can be discovered at runtime via the Global Discovery Service rather than hard-coding them. | The GDS base URL itself varies by cloud (e.g., `crm.dynamics.com` vs `crm9.dynamics.com` vs `crm.dynamics.cn`); discovery logic must be environment-aware. |
-| **UI-Level Validation Gaps** | API-level validation of Copilot Studio agent permissions does not always reflect the actual end-user experience in the studio UI. | Browser automation (e.g., Playwright) may be required to validate that a user can actually open, edit, and publish an agent after API-level role assignments succeed. |
-| **Modular Module Structure** | Separating concerns into `Classes/Models`, `Classes/Services`, and `Public/Private` folders makes PowerShell modules maintainable and testable. | This pattern applies to module architecture generally, not to cloud API auth logic specifically. |
+These service domains are scoped but not yet implemented in this PowerShell toolkit. However, dedicated MCP servers now exist for each gap — see [`docs/future-considerations.md`](docs/future-considerations.md) for a comprehensive catalog.
 
----
-
-## Endpoint Environment Mapping
-
-| Cloud | Graph API | Azure ARM | Dataverse GDS | BAP API |
-|-------|-----------|-----------|---------------|---------|
-| **AzureCloud** (Commercial) | `https://graph.microsoft.com` | `https://management.azure.com` | `https://globaldisco.crm.dynamics.com` | `https://api.bap.microsoft.com` |
-| **AzureUSGovernment** | `https://graph.microsoft.us` | `https://management.usgovcloudapi.net` | `https://globaldisco.crm9.dynamics.com` | `https://api.bap.microsoft.us` |
-| **AzureChinaCloud** | `https://microsoftgraph.chinacloudapi.cn` | `https://management.chinacloudapi.cn` | `https://globaldisco.crm.dynamics.cn` | `https://api.bap.microsoft.cn` |
-
-Skills must accept an `-Environment` or `-AzureEnvironment` parameter and resolve endpoints accordingly.
+| Service | Status | Notes |
+|---------|--------|-------|
+| **SharePoint Online** | Gap | Requires PnP PowerShell for data plane; Graph has partial coverage. See [skills/sharepoint-online/SKILL.md](skills/sharepoint-online/SKILL.md) |
+| **Microsoft Purview** | Gap | Documented as future requirement. MCP servers: `microsoft/purview-dlm-mcp`, `str-mcp-purview`, `scardoso-lu/purview-mcp-server` |
+| **Microsoft Defender** | Gap | Documented as future requirement. MCP servers: `MenkW/Defender-MCP`, `markolauren/ResponseMCP`. Defender for Cloud remains uncovered. |
+| **Microsoft Fabric / Power BI** | Gap | Documented as future requirement. MCP servers: `microsoft/powerbi-modeling-mcp`, `enelyse/powerbi-mcp-server` |
+| **Azure DevOps** | Gap | Documented as future requirement. MCP server: `microsoft/azure-devops-mcp` |
+| **Exchange Online** | Gap | Documented as future requirement. MCP servers: `softeria/ms-365-mcp-server`, `DustHoff/msgraphmcp`, `dsswift/mcp-exchange` |
 
 ---
 
@@ -202,15 +181,54 @@ Skills must accept an `-Environment` or `-AzureEnvironment` parameter and resolv
 # Install prerequisites
 ./prerequisites/Install-RequiredModules.ps1
 
-# Verify environment readiness
+# Verify environment
 ./prerequisites/Test-Prerequisites.ps1
 
-# Example: Connect to Graph with device code
-./skills/graph/Connect-GraphApi.ps1 -AuthenticationType DeviceCode -Environment AzureCloud
+# Run smoke tests (no live auth required)
+./prerequisites/Test-Smoke.ps1
 
-# Example: Connect to Dataverse with client credentials
-./skills/dataverse/Connect-DataverseApi.ps1 -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -EnvironmentUrl $env:DATAVERSE_ENVIRONMENT_URL
+# Run token validation tests (audience mismatches, expiry)
+./prerequisites/Test-TokenValidation.ps1
+
+# Load .env file (optional)
+Import-Module ./skills/Common.psm1
+Load-DotEnv -Path "./.env"
+
+# Auto-detect authentication
+$authContext = ./prerequisites/Setup-AuthenticationContext.ps1 -Resource "https://management.azure.com/"
+
+# Example: Connect to Graph with explicit parameters
+./skills/graph/Connect-GraphApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud
+
+# Example: Connect to Graph with a config profile
+./skills/graph/Connect-GraphApi.ps1 -Profile "prod" -ConfigPath "./config.yaml"
+
+# Example: Connect to Graph with prefixed environment variables
+./skills/graph/Connect-GraphApi.ps1 -Prefix "GOV" -Environment AzureUSGovernment
 ```
+
+---
+
+## Standardized Context Object
+
+All `Connect-*` scripts return a **plain hashtable** with these keys:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `Token` | `string` | Bearer token for the target service audience |
+| `ExpiresOn` | `datetime` | Token expiry in UTC |
+| `TenantId` | `string` | Entra ID tenant GUID |
+| `ClientId` | `string` | Application (client) ID |
+| `Environment` | `string` | `AzureCloud`, `AzureUSGovernment`, or `AzureChinaCloud` |
+| `BaseUri` | `string` | Service-specific base endpoint |
+| `AuthenticationType` | `string` | Method used: `ManagedIdentity`, `Federated`, `Certificate`, `ClientCredentials` |
+
+Service-specific additions:
+- **Azure ARM**: `SubscriptionId`, `ArmEndpoint`
+- **Dataverse**: `EnvironmentUrl`
+- **Power Platform**: `BapEndpoint`
+
+Downstream skill scripts accept this context via `-AuthContext` (or `-Context` for service-specific wrappers) and validate required fields before use.
 
 ---
 
@@ -222,29 +240,19 @@ Skills must accept an `-Environment` or `-AzureEnvironment` parameter and resolv
 
 ---
 
-## LSP Configuration
+## Documentation Index
 
-```json
-{
-  "lsp": {
-    "powershell": {
-      "command": [
-        "pwsh",
-        "-NoLogo",
-        "-NoProfile",
-        "-Command",
-        "/home/azureuser/.local/share/PowerShellEditorServices/PowerShellEditorServices/Start-EditorServices.ps1",
-        "-HostName", "oh-my-openagent",
-        "-HostProfileId", "0",
-        "-HostVersion", "1.0.0",
-        "-BundledModulesPath", "/home/azureuser/.local/share/PowerShellEditorServices",
-        "-LogPath", "/tmp/powershell-es.log",
-        "-LogLevel", "Normal",
-        "-SessionDetailsPath", "/tmp/powershell-es.session",
-        "-Stdio"
-      ],
-      "extensions": [".ps1", ".psm1", ".psd1"]
-    }
-  }
-}
-```
+| Document | Purpose |
+|----------|---------|
+| [README.md](README.md) | Project overview, quickstart, file map |
+| **Per-skill docs** | Domain-specific patterns, toolchain, examples |
+| [docs/auth-patterns.md](docs/auth-patterns.md) | Auth method selection guide |
+| [docs/secret-management.md](docs/secret-management.md) | Secret hierarchy and hard prohibitions |
+| [docs/environment-endpoints.md](docs/environment-endpoints.md) | Cross-cloud endpoint mapping |
+| [docs/token-chaining.md](docs/token-chaining.md) | Cross-service token reuse |
+| [docs/multi-tenant-auth.md](docs/multi-tenant-auth.md) | Multi-context session management |
+| [docs/patterns-and-caveats.md](docs/patterns-and-caveats.md) | Operational lessons learned |
+| [docs/project-positioning.md](docs/project-positioning.md) | Ecosystem positioning |
+| [docs/competitive-landscape.md](docs/competitive-landscape.md) | Alternative solutions |
+| [docs/future-considerations.md](docs/future-considerations.md) | Integration opportunities |
+| [docs/lsp-recommendations.md](docs/lsp-recommendations.md) | Language Server Protocol guidance for contributors |

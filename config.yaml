@@ -1,0 +1,57 @@
+# Microsoft Cloud API Skills — Multi-Tenant Configuration Example
+#
+# Copy this file to config.yaml and fill in your actual values.
+# Do NOT commit secrets to version control. This file is appropriate
+# for non-secret identifiers only (tenant IDs, client IDs, environment names).
+# Secret material (certificates, client secrets) should be retrieved from
+# Azure Key Vault or injected via environment variables at runtime.
+
+environments:
+  prod:
+    tenantId: "00000000-0000-0000-0000-000000000001"
+    azureEnvironment: "AzureCloud"
+    authenticationType: "ManagedIdentity"
+    subscriptionId: "00000000-0000-0000-0000-000000000001"
+    # Optional: specify a user-assigned managed identity client ID
+    # clientId: "00000000-0000-0000-0000-000000000001"
+
+  gov:
+    tenantId: "00000000-0000-0000-0000-000000000002"
+    azureEnvironment: "AzureUSGovernment"
+    authenticationType: "Certificate"
+    clientId: "00000000-0000-0000-0000-000000000002"
+    certificatePath: "/secure/certs/gov-automation.pfx"
+    subscriptionId: "00000000-0000-0000-0000-000000000002"
+
+  partner:
+    tenantId: "00000000-0000-0000-0000-000000000003"
+    azureEnvironment: "AzureCloud"
+    authenticationType: "Federated"
+    clientId: "00000000-0000-0000-0000-000000000004"
+    # The federated token is provided by the CI/CD platform at runtime
+    # (e.g., GitHub Actions, Azure DevOps, GitLab CI/CD)
+    subscriptionId: "00000000-0000-0000-0000-000000000003"
+
+  dev:
+    tenantId: "00000000-0000-0000-0000-000000000004"
+    azureEnvironment: "AzureCloud"
+    authenticationType: "ClientCredentials"
+    clientId: "00000000-0000-0000-0000-000000000005"
+    # Client secret should be passed via AZURE_CLIENT_SECRET env var
+    # or retrieved from Key Vault at runtime. Do not embed here.
+    subscriptionId: "00000000-0000-0000-0000-000000000004"
+
+  # Dataverse-specific environment configuration
+  dataverse-prod:
+    tenantId: "00000000-0000-0000-0000-000000000001"
+    azureEnvironment: "AzureCloud"
+    authenticationType: "ManagedIdentity"
+    environmentUrl: "https://contoso.crm.dynamics.com"
+
+  dataverse-gov:
+    tenantId: "00000000-0000-0000-0000-000000000002"
+    azureEnvironment: "AzureUSGovernment"
+    authenticationType: "Certificate"
+    clientId: "00000000-0000-0000-0000-000000000002"
+    certificatePath: "/secure/certs/gov-automation.pfx"
+    environmentUrl: "https://contoso.crm9.dynamics.com"
