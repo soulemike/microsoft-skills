@@ -1,4 +1,78 @@
+---
+name: sentinel
+description: Use this skill for Microsoft Sentinel management-plane automation over Azure Resource Manager, including incidents and analytic rules.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - sentinel
+  - security
+  - siem
+  - azure
+  - powershell
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: sentinel
+---
+
 # Microsoft Sentinel Skill
+
+## Agent Summary
+Use this skill for Microsoft Sentinel management-plane tasks that run through the `Microsoft.SecurityInsights` ARM provider. You must supply an ARM-capable auth context, usually created by `./skills/azure/Connect-AzureApi.ps1`.
+
+## When to Use
+- List or retrieve Sentinel incidents from a workspace.
+- Enumerate analytic alert rules through ARM.
+- Call workspace-scoped Sentinel management endpoints when no higher-level wrapper exists.
+
+## Required Parameters
+### `Get-SentinelIncident.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `SubscriptionId` | `string` | Yes | Azure subscription hosting the workspace. |
+| `ResourceGroupName` | `string` | Yes | Resource group containing the workspace. |
+| `WorkspaceName` | `string` | Yes | Sentinel-enabled Log Analytics workspace. |
+| `AuthContext` | `hashtable` | Yes | ARM auth context, typically from `Connect-AzureApi.ps1`. |
+| `IncidentId` | `string` | No | Retrieve one incident instead of listing all. |
+| `Status` | `string` | No | Client-side filter such as `New`, `Active`, or `Closed`. |
+
+### `Get-SentinelAlertRule.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `SubscriptionId` | `string` | Yes | Azure subscription hosting the workspace. |
+| `ResourceGroupName` | `string` | Yes | Resource group containing the workspace. |
+| `WorkspaceName` | `string` | Yes | Sentinel-enabled Log Analytics workspace. |
+| `AuthContext` | `hashtable` | Yes | ARM auth context. |
+| `RuleId` | `string` | No | Retrieve one rule instead of listing all. |
+
+### `Invoke-SentinelArmRequest.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Uri` | `string` | Yes | Relative path like `/incidents` or absolute `nextLink`. |
+| `SubscriptionId` | `string` | Yes | Azure subscription hosting the workspace. |
+| `ResourceGroupName` | `string` | Yes | Resource group containing the workspace. |
+| `WorkspaceName` | `string` | Yes | Sentinel-enabled Log Analytics workspace. |
+| `AuthContext` | `hashtable` | Yes | ARM auth context. |
+| `Method` | `string` | No | Defaults to `GET`. |
+| `ApiVersion` | `string` | No | Defaults to `2024-03-01`. |
+
+## Example Agent Prompts
+- "Query all Sentinel incidents from the last 24 hours."
+- "List all analytic alert rules for this Sentinel workspace."
+- "Call the Sentinel ARM incidents endpoint directly and return every page."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/azure/Connect-AzureApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud -SubscriptionId $subscriptionId
+
+$incidents = ./skills/sentinel/Get-SentinelIncident.ps1 -SubscriptionId $subscriptionId -ResourceGroupName $resourceGroupName -WorkspaceName $workspaceName -AuthContext $ctx -Status Active
+```
+
+## Security Caveats
+- Use an ARM context with the least privilege required, such as `Microsoft Sentinel Reader` for read-only workflows.
+- Do not confuse Sentinel management-plane access with Log Analytics data-plane access; KQL belongs to the `loganalytics` skill.
+- Avoid client secret auth in production when managed identity or federated credentials are available.
 
 ## Overview
 This skill set runs Microsoft Sentinel operations on the management plane via ARM (`Microsoft.SecurityInsights` resources). It wraps authentication and request execution so you can manage incidents, alert rules, watchlists, automation rules, and data connectors consistently.
@@ -63,6 +137,6 @@ For Log Analytics data-plane operations such as KQL queries, custom table creati
   - Microsoft Sentinel Contributor (required if you perform management-plane write operations via ARM, for example when expanding this skill set beyond read-only retrieval)
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

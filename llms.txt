@@ -1,0 +1,116 @@
+# Microsoft Cloud API Skills — Agent Context
+
+> One secure auth layer for every Microsoft cloud service your agent needs to touch.
+
+## What This Is
+
+A PowerShell-native toolkit that unifies authentication and API access across Microsoft Graph, Azure Resource Manager, Microsoft Sentinel, Log Analytics, Intune, Microsoft Teams, Dataverse, Power Platform, and Copilot Studio.
+
+**Core principle:** No secret material is embedded in any skill. All authentication follows a strict preference hierarchy with runtime enforcement.
+
+**For agents:** This repo exposes `Connect-*` and `Invoke-*` PowerShell scripts that your agent can call to interact with Microsoft cloud services securely. The auth context returned by any `Connect-*` script can be passed to `Invoke-*` scripts for that service.
+
+## Quick Agent Usage
+
+```powershell
+# 1. Auto-detect the best available authentication method
+$authContext = ./prerequisites/Setup-AuthenticationContext.ps1 -Resource "https://management.azure.com/"
+
+# 2. Connect to a service (example: Microsoft Graph)
+$graph = ./skills/graph/Connect-GraphApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud
+
+# 3. Invoke a request
+./skills/graph/Invoke-GraphRequest.ps1 -Context $graph -Uri "/users?`$select=id,displayName,mail"
+```
+
+## Authentication Hierarchy (Enforced)
+
+All skills enforce this preference order. The setup script auto-detects the highest-trust method available.
+
+| Rank | Method | When to Use |
+|------|--------|-------------|
+| 1 | **Managed Identity** | Azure-hosted workloads (VM, Function App, App Service, Arc) |
+| 2 | **Federated Credentials (OIDC)** | GitHub Actions, Azure DevOps, GitLab CI/CD |
+| 3 | **Certificate-Based Auth** | Hybrid, on-prem, or sovereign cloud where MI/OIDC unavailable |
+| 4 | **Client Secret** | **Last resort only** — emits a mandatory runtime warning |
+
+Interactive authentication is **not permitted** for skill execution.
+
+## Standardized Context Object
+
+All `Connect-*` scripts return a plain hashtable with this shape:
+
+```powershell
+@{
+    Token              = "eyJ0eXAiOiJKV1Qi..."
+    ExpiresOn          = [datetime]"2026-01-01T12:00:00Z"
+    TenantId           = "00000000-0000-0000-0000-000000000000"
+    ClientId           = "00000000-0000-0000-0000-000000000000"
+    Environment        = "AzureCloud"
+    BaseUri            = "https://graph.microsoft.com/v1.0"
+    AuthenticationType = "ManagedIdentity"
+}
+```
+
+Service-specific additions:
+- **Azure ARM**: `SubscriptionId`, `ArmEndpoint`
+- **Dataverse**: `EnvironmentUrl`
+- **Power Platform**: `BapEndpoint`
+
+## Available Skills
+
+| Service | Connect Script | Invoke Script | Key Capabilities |
+|---------|---------------|---------------|------------------|
+| **Microsoft Graph** | `skills/graph/Connect-GraphApi.ps1` | `skills/graph/Invoke-GraphRequest.ps1` | Users, groups, apps, pagination, throttling |
+| **Azure ARM** | `skills/azure/Connect-AzureApi.ps1` | `skills/azure/Invoke-AzureRestMethod.ps1` | Resources, deployments, async ops |
+| **Sentinel** | — (uses Azure context) | `skills/sentinel/Get-SentinelIncident.ps1` | Incidents, alert rules, watchlists |
+| **Log Analytics** | `skills/loganalytics/Connect-LogAnalyticsApi.ps1` | `skills/loganalytics/Invoke-LogAnalyticsKqlQuery.ps1` | KQL queries, workspace ops |
+| **Intune** | — (uses Graph context) | `skills/intune/Get-IntuneDevice.ps1` | Devices, policies, configurations |
+| **Teams** | — (uses Graph context) | `skills/teams/Get-TeamsChannel.ps1` | Channels, members |
+| **Dataverse** | `skills/dataverse/Connect-DataverseApi.ps1` | `skills/dataverse/Invoke-DataverseRequest.ps1` | OData queries, environment discovery |
+| **Power Platform** | `skills/powerplatform/Connect-PowerPlatformApi.ps1` | `skills/powerplatform/Get-PowerPlatformEnvironment.ps1` | Environment listing, BAP API |
+| **Copilot Studio** | — (uses Dataverse context) | `skills/copilotstudio/Get-CopilotAgentInfo.ps1` | Agent info, knowledge management |
+| **VM Guest Management** | — (uses Azure context) | `skills/vm-guest-management/Invoke-VmRunCommand.ps1` | Run commands, Bastion SSH |
+
+## Security Rules for Agents
+
+1. **Never embed secrets in scripts.** Use environment variables, Key Vault, or managed identity.
+2. **Prefer Managed Identity or Federated Credentials.** Client secrets are a last resort and will trigger a runtime warning.
+3. **Use explicit auth context objects.** Do not rely on module-scoped session state — pass context objects between calls.
+4. **Respect multi-tenant boundaries.** Use `-Prefix` or `-Profile` parameters when working across tenants.
+5. **Validate token expiry.** Check `ExpiresOn` before making requests; re-authenticate if expired.
+
+## Project Structure
+
+```
+skills/
+  Common.psm1              # Shared auth, REST, pagination
+  graph/                   # Graph API skills
+  azure/                   # Azure ARM skills
+  sentinel/                # Sentinel skills
+  loganalytics/            # Log Analytics skills
+  intune/                  # Intune skills
+  teams/                   # Teams skills
+  dataverse/               # Dataverse skills
+  powerplatform/           # Power Platform skills
+  copilotstudio/           # Copilot Studio skills
+  vm-guest-management/     # VM management skills
+prerequisites/
+  Setup-AuthenticationContext.ps1  # Auto-detect auth
+  Install-RequiredModules.ps1      # Install Az, Microsoft.Graph, etc.
+  Test-Prerequisites.ps1           # Verify environment
+docs/
+  auth-patterns.md         # Auth method selection guide
+  secret-management.md     # Secret handling policy
+  multi-tenant-auth.md     # Multi-context session management
+```
+
+## Requirements
+
+- PowerShell 7.2+
+- Az.Accounts, Az.Resources (installed by `Install-RequiredModules.ps1`)
+- Microsoft.Graph.Authentication (optional)
+
+## License
+
+MIT License. See LICENSE file.

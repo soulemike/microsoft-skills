@@ -1,4 +1,70 @@
+---
+name: azure
+description: Use this skill for Azure Resource Manager authentication and REST automation with sovereign cloud support, pagination, and async operation tracking.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - azure
+  - arm
+  - powershell
+  - api
+  - automation
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: azure
+---
+
 # Azure Resource Manager Skill
+
+## Agent Summary
+Use this skill when an agent needs an ARM-scoped token and a safe REST wrapper for Azure management-plane work. Create a context with `Connect-AzureApi.ps1`, then pass that context to `Invoke-AzureRestMethod.ps1` for Azure subscriptions, resource groups, providers, or async operation polling.
+
+## When to Use
+- List, read, create, update, or delete Azure resources through ARM.
+- Work in Azure commercial, US Gov, or China without rewriting endpoints.
+- Capture `Azure-AsyncOperation`, `Operation-Location`, or `Location` headers for long-running operations.
+
+## Required Parameters
+### `Connect-AzureApi.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Environment` | `string` | Yes | `AzureCloud`, `AzureUSGovernment`, or `AzureChinaCloud`. |
+| `AuthenticationType` | `string` | Conditional | `ManagedIdentity`, `Federated`, `Certificate`, or `ClientCredentials`. |
+| `TenantId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`. |
+| `ClientId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`; optional for user-assigned managed identity. |
+| `FederatedToken` | `string` | Conditional | Required for `Federated`. |
+| `CertificatePath` | `string` | Conditional | Required for `Certificate`. |
+| `ClientSecret` | `SecureString` | Conditional | Required for `ClientCredentials`. |
+| `SubscriptionId` | `string` | No | Recommended when later ARM calls are subscription-scoped. |
+
+### `Invoke-AzureRestMethod.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Uri` | `string` | Yes | Relative ARM path or absolute ARM URL. |
+| `AuthContext` | `object` | Yes | Output from `Connect-AzureApi.ps1`. |
+| `Method` | `string` | No | Defaults to `GET`. |
+| `ApiVersion` | `string` | No | Strongly recommended for ARM resources. |
+| `Body` | `object` | No | Request payload for writes. |
+| `Paginate` | `switch` | No | Enumerates GET pagination. |
+
+## Example Agent Prompts
+- "List all resource groups in this Azure subscription."
+- "Create a storage account through ARM and capture the async operation URL."
+- "Call an Azure REST endpoint directly when there is no SDK wrapper."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/azure/Connect-AzureApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud -SubscriptionId $env:SUBSCRIPTION_ID
+
+$groups = ./skills/azure/Invoke-AzureRestMethod.ps1 -Uri "/subscriptions/$($ctx.SubscriptionId)/resourcegroups" -ApiVersion "2021-04-01" -AuthContext $ctx -Paginate
+```
+
+## Security Caveats
+- Prefer `ManagedIdentity` or `Federated` authentication; never default to client secrets.
+- Scope RBAC as narrowly as possible at the subscription, resource group, or resource level.
+- Treat async completion as incomplete until the returned operation endpoint reports success.
 
 ## Overview
 This skill set covers Azure Resource Manager (ARM) authentication and REST calls for sovereign cloud aware automation. Use `Connect-AzureApi.ps1` to build an ARM context, then `Invoke-AzureRestMethod.ps1` to execute and track ARM operations.
@@ -106,6 +172,6 @@ $ctx = ./skills/azure/Connect-AzureApi.ps1 -Prefix "GOV" -Environment AzureUSGov
 - Required roles: RBAC permissions on the target scope (subscription or resource group), for example `Reader` for read-only operations, `Contributor` or higher for PUT/PATCH/DELETE, and deployment permissions for ARM template deployments.
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

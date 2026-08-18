@@ -1,4 +1,69 @@
+---
+name: dataverse
+description: Use this skill for Microsoft Dataverse Web API automation with OData queries, environment-aware authentication, and pagination-aware REST calls.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - dataverse
+  - dynamics-365
+  - odata
+  - powershell
+  - automation
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: dataverse
+---
+
 # Dataverse Skill
+
+## Agent Summary
+Use this skill for Dataverse Web API requests when an agent needs direct OData access instead of PAC CLI abstractions. The token audience is the Dataverse environment URL itself, so start by creating a context with `Connect-DataverseApi.ps1`.
+
+## When to Use
+- Query Dataverse tables with OData filters, selects, and pagination.
+- Connect to a known Dataverse environment or discover one through the Global Discovery Service.
+- Perform direct CRUD operations against Dataverse entities.
+
+## Required Parameters
+### `Connect-DataverseApi.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `EnvironmentUrl` | `string` | Yes | Dataverse environment root URL or full Web API URL. |
+| `AuthenticationType` | `string` | Conditional | `ManagedIdentity`, `Federated`, `Certificate`, or `ClientCredentials`. |
+| `Environment` | `string` | No | Defaults to `AzureCloud`. |
+| `TenantId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`. |
+| `ClientId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`. |
+| `FederatedToken` | `string` | Conditional | Required for `Federated`. |
+| `CertificatePath` | `string` | Conditional | Required for `Certificate`. |
+| `ClientSecret` | `SecureString` | Conditional | Required for `ClientCredentials`. |
+
+### `Invoke-DataverseRequest.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Uri` | `string` | Yes | Relative Dataverse API path or absolute nextLink URL. |
+| `AuthContext` | `hashtable` | Yes | Output from `Connect-DataverseApi.ps1`. |
+| `Method` | `string` | No | Defaults to `GET`. |
+| `Body` | `object` | No | Request payload for writes. |
+| `Paginate` | `switch` | No | Aggregates `@odata.nextLink` pages. |
+
+## Example Agent Prompts
+- "List the first 50 Dataverse accounts with `accountid` and `name`."
+- "Query Dataverse contacts where `emailaddress1` is not null."
+- "Patch a Dataverse account record by ID."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/dataverse/Connect-DataverseApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud -EnvironmentUrl $env:DATAVERSE_ENVIRONMENT_URL
+
+$accounts = ./skills/dataverse/Invoke-DataverseRequest.ps1 -AuthContext $ctx -Uri "/accounts?`$select=accountid,name&`$top=50" -Paginate
+```
+
+## Security Caveats
+- The Dataverse environment URL is the token audience; do not substitute Graph or ARM tokens.
+- Prefer managed identity or federated credentials over client secrets.
+- Grant only the Dataverse roles and table permissions required for the requested entity operations.
 
 ## Overview
 This skillset connects to Microsoft Dataverse Web API and executes OData requests with consistent auth, environment discovery, and retry behavior.
@@ -100,6 +165,6 @@ Invoke-DataverseRequest.ps1 \
 - Required permissions: An Entra ID app registration with Dataverse Web API access for the specific Dataverse environment (the token audience is the environment URL), plus Dataverse security roles that permit the entity reads and writes you will perform.
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

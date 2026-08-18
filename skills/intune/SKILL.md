@@ -1,4 +1,73 @@
+---
+name: intune
+description: Use this skill for Microsoft Intune device and configuration policy retrieval through Microsoft Graph, including per-item enrichment and beta-only policy surfaces.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - intune
+  - endpoint-manager
+  - graph
+  - powershell
+  - device-management
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: intune
+---
+
 # Intune / Endpoint Manager Skill
+
+## Agent Summary
+Use this skill when an agent needs Intune data through Microsoft Graph, especially when list endpoints return incomplete objects. The usual pattern is to authenticate with `./skills/graph/Connect-GraphApi.ps1`, list lightweight objects first, then perform per-item GETs or child-endpoint queries for full detail.
+
+## When to Use
+- List Intune managed devices and enrich sparse properties.
+- Retrieve classic device configuration or compliance policies.
+- Access beta-only settings catalog or configuration policy endpoints.
+
+## Required Parameters
+### `Get-IntuneDevice.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `AuthContext` | `hashtable` | Yes | Graph auth context from `Connect-GraphApi.ps1`. |
+| `DeviceId` | `string` | No | When present, retrieves one managed device. |
+| `Select` | `string[]` | No | Use this for per-device enrichment; `hardwareInformation` forces beta. |
+
+### `Get-IntuneConfigurationPolicy.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `AuthContext` | `hashtable` | Yes | Graph auth context from `Connect-GraphApi.ps1`. |
+| `PolicyType` | `string` | No | `deviceConfiguration`, `deviceCompliance`, or `configurationPolicy`; defaults to `deviceConfiguration`. |
+| `PolicyId` | `string` | No | Retrieve one policy instead of listing. |
+| `IncludeSettings` | `switch` | No | Valid only for `configurationPolicy`. |
+| `IncludeAssignments` | `switch` | No | Retrieves `/assignments` child data. |
+
+### `Invoke-IntuneGraphRequest.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Uri` | `string` | Yes | Intune-relative path or absolute Graph nextLink URL. |
+| `AuthContext` | `hashtable` | Yes | Graph auth context. |
+| `ApiVersion` | `string` | No | `v1.0` or `beta`; defaults to `v1.0`. |
+| `Method` | `string` | No | Defaults to `GET`. |
+| `Body` | `object` | No | Request payload for writes. |
+
+## Example Agent Prompts
+- "List all Intune managed devices and then enrich each device with hardware information."
+- "Retrieve all Intune configuration policies including settings and assignments."
+- "Use the beta Intune endpoint for settings catalog policies."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/graph/Connect-GraphApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud
+
+$devices = ./skills/intune/Get-IntuneDevice.ps1 -AuthContext $ctx -Select @('id','deviceName','operatingSystem')
+```
+
+## Security Caveats
+- Prefer managed identity or federated credentials over client secrets.
+- Request only the Graph application permissions needed for the exact Intune surface you are querying.
+- Treat beta endpoints as change-prone and validate them before using them in production automations.
 
 ## Overview
 This skill package uses Microsoft Graph to read Intune managed devices and retrieve Intune policy configuration details.
@@ -156,6 +225,6 @@ $policies[0].assignments
 - [TenuVault](https://tenuvault.com/) — Tenant-level backup and restore for Intune policies, profiles, and apps
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Patterns and Caveats](../docs/patterns-and-caveats.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Patterns and Caveats](../../docs/patterns-and-caveats.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

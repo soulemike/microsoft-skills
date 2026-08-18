@@ -1,4 +1,70 @@
+---
+name: vm-guest-management
+description: Use this skill for Azure VM and Arc guest execution, Bastion connectivity, and SSH key lifecycle automation.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - azure-vm
+  - bastion
+  - run-command
+  - ssh
+  - powershell
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: vm-guest-management
+---
+
 # VM Guest Management Skill
+
+## Agent Summary
+Use this skill for guest-level Azure VM or Arc machine actions such as Run Command execution, Bastion SSH or tunnel setup, and SSH key rotation. Most operations require an ARM auth context from `./skills/azure/Connect-AzureApi.ps1`, while Bastion connectivity also depends on Azure CLI.
+
+## When to Use
+- Execute an inline or file-based script on an Azure VM or Arc machine.
+- Open a Bastion tunnel for SSH, SCP, SFTP, or IDE workflows.
+- Rotate or replace SSH keys across one or more Linux VMs.
+
+## Required Parameters
+### `Invoke-VmRunCommand.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `ResourceGroupName` | `string` | Yes | Resource group for the target VM or Arc machine. |
+| `AuthContext` | `object` | Yes | ARM auth context from `Connect-AzureApi.ps1`. |
+| `VmName` | `string` | Conditional | Required for Azure VM execution unless `-IsArc` is used. |
+| `MachineName` | `string` | Conditional | Required when `-IsArc` is used. |
+| `ScriptString` | `string` | Conditional | Provide inline script text or use `ScriptPath`. |
+| `ScriptPath` | `string` | Conditional | Local script file path; provide this or `ScriptString`. |
+| `RunCommandName` | `string` | Conditional | Required for Arc managed Run Command; optional for Azure managed Run Command. |
+
+### `Connect-VmBastionSsh.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `BastionName` | `string` | Yes | Azure Bastion host name. |
+| `ResourceGroupName` | `string` | Yes | Resource group containing the Bastion host. |
+| `TargetResourceId` | `string` | Yes | Resource ID of the target VM. |
+| `Mode` | `string` | No | `ssh`, `rdp`, or `tunnel`; defaults to `ssh`. |
+| `AuthType` | `string` | No | `ssh-key` or `AAD`; defaults to `ssh-key`. |
+| `Username` | `string` | Conditional | Required for SSH key mode. |
+| `SshKeyPath` | `string` | Conditional | Required for SSH key mode. |
+
+## Example Agent Prompts
+- "Run a bootstrap script on an Azure VM and return the guest output."
+- "Start an Azure Bastion tunnel for this VM so I can SSH locally."
+- "Rotate SSH public keys across these Linux VMs."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/azure/Connect-AzureApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud -SubscriptionId $subscriptionId
+
+$result = ./skills/vm-guest-management/Invoke-VmRunCommand.ps1 -ResourceGroupName "rg-app" -VmName "vm01" -ScriptString "echo hello" -AuthContext $ctx
+```
+
+## Security Caveats
+- Do not treat ARM provisioning success as guest execution success; always inspect execution state and exit code.
+- Prefer managed identity or federated credentials over client secrets for ARM access.
+- Protect SAS URIs, SSH private keys, and break-glass accounts as sensitive credentials.
 
 ## Overview
 Provides reusable PowerShell wrappers for executing guest scripts on Azure VMs/Arc-enabled machines (Run Command) and for managing SSH access via Bastion and SSH key rotation.
@@ -121,6 +187,6 @@ Provisioning success != guest script success. Always inspect instanceView.
 - For Run Command and SSH key management (ARM): permissions to write/execute VM Run Command and manage VMAccessForLinux extension (e.g., `Microsoft.Compute/virtualMachines/runCommand/action` and VM extension write permissions)
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Patterns and Caveats](../docs/patterns-and-caveats.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Patterns and Caveats](../../docs/patterns-and-caveats.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

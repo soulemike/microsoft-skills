@@ -1,4 +1,68 @@
+---
+name: graph
+description: Use this skill for unattended Microsoft Graph automation with app-only authentication, sovereign cloud awareness, pagination, and throttling-aware REST calls.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - graph
+  - powershell
+  - entra-id
+  - api
+  - automation
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: graph
+---
+
 # Microsoft Graph Skill
+
+## Agent Summary
+Use this skill when an agent needs Microsoft Graph app-only automation without interactive sign-in. Start by creating a context with `Connect-GraphApi.ps1`, then send relative Graph paths or absolute `@odata.nextLink` URLs to `Invoke-GraphRequest.ps1`.
+
+## When to Use
+- Query Microsoft Entra ID objects such as users, groups, applications, or service principals.
+- Run the same automation in Azure commercial, US Gov, or China clouds.
+- Follow Graph pagination and handle throttling without reimplementing retry logic.
+
+## Required Parameters
+### `Connect-GraphApi.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `AuthenticationType` | `string` | Conditional | `ManagedIdentity`, `Federated`, `Certificate`, or `ClientCredentials`. |
+| `Environment` | `string` | No | Defaults to `AzureCloud`. |
+| `TenantId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`. |
+| `ClientId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`; optional for user-assigned managed identity. |
+| `FederatedToken` | `string` | Conditional | Required for `Federated`. |
+| `CertificatePath` | `string` | Conditional | Required for `Certificate`. |
+| `ClientSecret` | `SecureString` | Conditional | Required for `ClientCredentials`. |
+
+### `Invoke-GraphRequest.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Uri` | `string` | Yes | Relative Graph path or absolute nextLink URL. |
+| `AuthContext` | `hashtable` | Yes | Output from `Connect-GraphApi.ps1`. |
+| `Method` | `string` | No | Defaults to `GET`. |
+| `Body` | `object` | No | Request payload for writes. |
+| `Paginate` | `switch` | No | Aggregate `@odata.nextLink` pages. |
+
+## Example Agent Prompts
+- "List all Microsoft Graph users with `id`, `displayName`, and `mail`."
+- "Get a specific group from Microsoft Graph by ID using app-only auth."
+- "Follow all pages for a Graph query and return the aggregated results."
+
+## Example Agent Workflow
+```powershell
+$context = ./skills/graph/Connect-GraphApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud
+
+$users = ./skills/graph/Invoke-GraphRequest.ps1 -AuthContext $context -Uri "/users?`$select=id,displayName,mail" -Paginate
+```
+
+## Security Caveats
+- Prefer `ManagedIdentity` or `Federated` authentication; use client secrets only as a last resort.
+- Never assume delegated/user auth is available; this skill is designed for app-only execution.
+- Grant only the minimum Graph application permissions required for the requested operation.
 
 ## Overview
 This skill domain covers unattended Microsoft Graph API automation using app-only authentication. It provides a standardized way to acquire Graph tokens for different Azure environments and invoke Graph REST requests with pagination and throttling-aware retries.
@@ -81,6 +145,6 @@ $context = ./skills/graph/Connect-GraphApi.ps1 -Prefix "GOV" -Environment AzureU
 - Required permissions (application permissions): configure Microsoft Graph application permissions on the app registration used by your auth method. The scripts request tokens for the Graph resource endpoint and then call Graph with that token.
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

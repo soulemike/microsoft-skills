@@ -1,4 +1,67 @@
+---
+name: loganalytics
+description: Use this skill for Log Analytics KQL queries, workspace lifecycle management, DCE and DCR provisioning, and Azure Monitor log ingestion workflows.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - log-analytics
+  - kql
+  - azure-monitor
+  - observability
+  - powershell
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: loganalytics
+---
+
 # Log Analytics Workspace Lifecycle Skill
+
+## Agent Summary
+Use this skill when you need Log Analytics data-plane queries or ARM-based workspace management. The important distinction is that KQL queries, ARM lifecycle calls, and Logs Ingestion API uploads use different endpoints and sometimes different token audiences.
+
+## When to Use
+- Run KQL against a Log Analytics workspace.
+- Create or reuse a workspace, custom table, DCE, or DCR.
+- Send logs through the Logs Ingestion API with Data Collector fallback.
+
+## Required Parameters
+### `Connect-LogAnalyticsApi.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `AuthenticationType` | `string` | Conditional | `ManagedIdentity`, `Federated`, `Certificate`, or `ClientCredentials`. |
+| `Environment` | `string` | No | Defaults to `AzureCloud`. |
+| `TenantId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`. |
+| `ClientId` | `string` | Conditional | Required for `Federated`, `Certificate`, and `ClientCredentials`; optional for user-assigned managed identity. |
+| `FederatedToken` | `string` | Conditional | Required for `Federated`. |
+| `CertificatePath` | `string` | Conditional | Required for `Certificate`. |
+| `ClientSecret` | `SecureString` | Conditional | Required for `ClientCredentials`. |
+
+### `Invoke-LogAnalyticsKqlQuery.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `WorkspaceId` | `string` | Yes | Workspace ID to query. |
+| `Query` | `string` | Yes | KQL query text. |
+| `AuthContext` | `hashtable` | Yes | Data-plane Log Analytics auth context. |
+| `Timespan` | `string` | No | Example: `1h`, `24h`, or `7d`. |
+
+## Example Agent Prompts
+- "Run a KQL query for all Sentinel incidents from the last 24 hours."
+- "Create a Log Analytics workspace and bootstrap a DCE and DCR for ingestion."
+- "Send logs through the Logs Ingestion API and fall back to the Data Collector API if authorization fails."
+
+## Example Agent Workflow
+```powershell
+$laCtx = ./skills/loganalytics/Connect-LogAnalyticsApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud
+
+$rows = ./skills/loganalytics/Invoke-LogAnalyticsKqlQuery.ps1 -WorkspaceId $workspaceId -Query "SecurityIncident | where TimeGenerated > ago(24h) | take 50" -Timespan "1d" -AuthContext $laCtx
+```
+
+## Security Caveats
+- Do not reuse an ARM token for KQL or Azure Monitor ingestion unless the target endpoint accepts that audience.
+- Prefer managed identity or federated credentials over client secrets.
+- Treat workspace shared keys as sensitive break-glass credentials and use them only when DCR-based ingestion cannot be authorized.
 
 ## Overview
 This skill set manages Log Analytics workspace lifecycle operations across the Azure Resource Manager (ARM) management plane and Azure Monitor ingestion endpoints. It standardizes authentication, workspace provisioning, custom table creation, Data Collection Endpoint (DCE) and Data Collection Rule (DCR) setup, and log ingestion with a DCR-first strategy.
@@ -172,6 +235,6 @@ $ingestionAuthContext = ./prerequisites/Setup-AuthenticationContext.ps1 -Resourc
 - Optional shared-key access for Data Collector API fallback
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

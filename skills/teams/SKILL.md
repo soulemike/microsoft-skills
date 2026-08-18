@@ -1,4 +1,70 @@
+---
+name: teams
+description: Use this skill for Microsoft Teams channel and membership retrieval through Microsoft Graph with automatic pagination.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - teams
+  - graph
+  - collaboration
+  - powershell
+  - automation
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: teams
+---
+
 # Microsoft Teams Skill
+
+## Agent Summary
+Use this skill for Teams channel and membership reads that are exposed through Microsoft Graph. Authenticate with `./skills/graph/Connect-GraphApi.ps1`, then use the Teams wrappers for team channels, team members, or channel members.
+
+## When to Use
+- List channels for a team.
+- Retrieve one channel by ID.
+- List team members or private/shared channel members.
+
+## Required Parameters
+### `Get-TeamsChannel.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `TeamId` | `string` | Yes | Microsoft Teams team identifier. |
+| `AuthContext` | `hashtable` | Yes | Graph auth context from `Connect-GraphApi.ps1`. |
+| `ChannelId` | `string` | No | Retrieve a single channel instead of listing. |
+
+### `Get-TeamsMember.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `TeamId` | `string` | Yes | Microsoft Teams team identifier. |
+| `AuthContext` | `hashtable` | Yes | Graph auth context from `Connect-GraphApi.ps1`. |
+| `ChannelId` | `string` | No | When present, retrieves channel-specific members. |
+
+### `Invoke-TeamsGraphRequest.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Uri` | `string` | Yes | Teams-relative path or absolute Graph nextLink URL. |
+| `AuthContext` | `hashtable` | Yes | Graph auth context. |
+| `Method` | `string` | No | Defaults to `GET`. |
+| `Body` | `object` | No | Request payload for writes. |
+
+## Example Agent Prompts
+- "List all channels in this Microsoft Team."
+- "Get all members of a private Teams channel."
+- "Call the Teams Graph endpoint directly for a team membership query."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/graph/Connect-GraphApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud
+
+$channels = ./skills/teams/Get-TeamsChannel.ps1 -TeamId $teamId -AuthContext $ctx
+```
+
+## Security Caveats
+- Teams APIs are Graph APIs, so limit Graph application permissions to the smallest set possible.
+- Some membership operations are valid only for private or shared channels; standard channels inherit team membership.
+- Avoid client secret auth in production when managed identity or federated credentials are possible.
 
 ## Overview
 This skill automates Microsoft Teams channel and membership retrieval using Microsoft Graph. It wraps Teams-specific Graph paths and automatically follows Graph pagination.
@@ -59,6 +125,6 @@ $authContext = ./skills/graph/Connect-GraphApi.ps1 -AuthenticationType ManagedId
   - Microsoft Graph application permissions for Teams operations, typically `Group.ReadWrite.All`
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

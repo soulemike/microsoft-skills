@@ -1,4 +1,77 @@
+---
+name: copilotstudio
+description: Use this skill for Copilot Studio agent deployment and knowledge source management through Dataverse-backed REST operations.
+version: 1.0.0
+license: MIT
+author: Microsoft
+tags:
+  - microsoft
+  - copilot-studio
+  - dataverse
+  - agents
+  - powershell
+  - automation
+metadata:
+  project: microsoft-cloud-api-skills
+  domain: copilotstudio
+---
+
 # Copilot Studio Skill
+
+## Agent Summary
+Use this skill when an agent needs to read Copilot Studio bot metadata, publish or unpublish a bot, or manage knowledge sources directly in Dataverse. Supply a Dataverse context from `./skills/dataverse/Connect-DataverseApi.ps1`.
+
+## When to Use
+- Query Copilot Studio bot metadata from the `bots` entity set.
+- Publish, unpublish, or update a Copilot Studio agent.
+- Create, list, update, or delete Copilot Studio knowledge sources.
+
+## Required Parameters
+### `Get-CopilotAgentInfo.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Context` | `hashtable` | Yes | Dataverse context from `Connect-DataverseApi.ps1`. |
+| `AgentId` | `string` | No | Retrieve one bot record. |
+| `Select` | `string[]` | No | OData projection. |
+| `Filter` | `string` | No | OData filter for list operations. |
+
+### `Deploy-CopilotAgent.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `AgentId` | `string` | Yes | Copilot Studio bot identifier. |
+| `Action` | `string` | Yes | `Publish`, `Unpublish`, or `Update`. |
+| `Context` | `hashtable` | Yes | Dataverse context. |
+| `AgentData` | `hashtable` | No | Required for update flows or PATCH-based publish/unpublish fallback. |
+| `PublishActionName` | `string` | No | Dataverse bound action for publish. |
+| `UnpublishActionName` | `string` | No | Dataverse bound action for unpublish. |
+
+### `Manage-CopilotKnowledge.ps1`
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `Operation` | `string` | Yes | `List`, `Get`, `Create`, `Update`, or `Delete`. |
+| `Context` | `hashtable` | Yes | Dataverse context. |
+| `AgentId` | `string` | Conditional | Useful for scoped list operations and some relationship bindings. |
+| `KnowledgeSourceId` | `string` | Conditional | Required for `Get`, `Update`, and `Delete`. |
+| `KnowledgeSourceData` | `hashtable` | Conditional | Required for `Create` and `Update`. |
+| `KnowledgeEntitySetName` | `string` | No | Defaults to `knowledgesources`. |
+| `AgentFilterField` | `string` | No | Defaults to `_botid_value`. |
+
+## Example Agent Prompts
+- "List all Copilot Studio agents in this Dataverse environment."
+- "Publish a Copilot Studio agent by bot ID."
+- "Create a knowledge source and bind it to a Copilot Studio bot."
+
+## Example Agent Workflow
+```powershell
+$ctx = ./skills/dataverse/Connect-DataverseApi.ps1 -AuthenticationType ManagedIdentity -Environment AzureCloud -EnvironmentUrl "https://contoso.crm.dynamics.com"
+
+$agents = ./skills/copilotstudio/Get-CopilotAgentInfo.ps1 -Context $ctx -Select @('botid','name','statecode','statuscode')
+```
+
+## Security Caveats
+- Copilot Studio is Dataverse-backed, so use Dataverse least-privilege roles and table permissions.
+- Avoid client secrets in production; prefer managed identity or federated credentials.
+- Bound action names and knowledge entity names can vary by environment, so verify them before writing automation that mutates data.
 
 ## Overview
 Manage Copilot Studio agents and knowledge sources using the Dataverse Web API. The scripts operate directly on Dataverse `bots` and knowledge source entity sets via REST, with token and endpoint details supplied through `Connect-DataverseApi.ps1`.
@@ -63,6 +136,6 @@ Manage-CopilotKnowledge.ps1 -Context $context -Operation Create -KnowledgeSource
   - Permission to invoke bound actions when you use `-PublishActionName` or `-UnpublishActionName`
 
 ## Related Docs
-- [Auth Patterns](../docs/auth-patterns.md)
-- [Token Chaining](../docs/token-chaining.md)
-- [Environment Endpoints](../docs/environment-endpoints.md)
+- [Auth Patterns](../../docs/auth-patterns.md)
+- [Token Chaining](../../docs/token-chaining.md)
+- [Environment Endpoints](../../docs/environment-endpoints.md)

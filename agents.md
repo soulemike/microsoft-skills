@@ -1,5 +1,8 @@
 # Microsoft Cloud API Skills - Agent Context
 
+> **Note:** This document is the master design specification for human maintainers.
+> For the machine-readable agent contract, see [`AGENTS.md`](../AGENTS.md) in the repository root.
+
 ## Project Objective
 
 This project provides a **modular package of reusable skills** for working with different Microsoft cloud service APIs. The goal is to generalize and abstract the connection patterns, authentication flows, and API interaction models observed across diverse Microsoft cloud automation scenarios into a cohesive, reusable toolkit.

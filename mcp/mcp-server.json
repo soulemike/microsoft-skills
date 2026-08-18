@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "microsoft-cloud-api-skills": {
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-NoLogo",
+        "-File",
+        "${workspaceFolder}/mcp/Start-MicrosoftCloudApiSkillsMcp.ps1"
+      ],
+      "env": {
+        "MCP_SDK_ROOT": "${workspaceFolder}/mcp/.sdk/pwsh.mcp.sdk"
+      }
+    }
+  }
+}

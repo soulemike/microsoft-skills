@@ -1,6 +1,36 @@
 # Microsoft Cloud API Skills
 
-A **modular PowerShell toolkit** for automating Microsoft cloud service APIs with enterprise-grade authentication governance, secret management, and multi-tenant context isolation.
+[![PowerShell 7.2+](https://img.shields.io/badge/PowerShell-7.2+-blue?logo=powershell)](https://docs.microsoft.com/powershell/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/cloud-api-skills/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/cloud-api-skills)
+
+> **Give your agents secure, governed access to Microsoft 365, Azure, and Sentinel.**
+>
+> One auth layer. One secret policy. Zero embedded credentials.
+
+---
+
+## For Agents
+
+This repository is designed to be used by AI coding agents. Point your agent here and it can:
+
+- Query Sentinel incidents, Intune devices, and Teams channels
+- Run KQL against Log Analytics workspaces
+- Deploy Copilot Studio agents via Dataverse
+- Execute VM run commands and manage SSH keys
+
+**Agent entry points:**
+- [`AGENTS.md`](AGENTS.md) — Machine-readable contract: tools, auth patterns, security boundaries
+- [`llms.txt`](llms.txt) — Concise discovery context for LLMs
+- [`mcp/`](mcp/) — MCP server for Claude Code, Codex, Cursor, and other MCP-compatible agents
+
+```powershell
+# Agent quickstart: list Sentinel incidents from the last 24 hours
+$ctx = ./prerequisites/Setup-AuthenticationContext.ps1 -Resource "https://management.azure.com/"
+./skills/sentinel/Get-SentinelIncident.ps1 -AuthContext $ctx -WorkspaceName "my-workspace"
+```
+
+---
 
 ## What This Is
 
@@ -201,8 +231,12 @@ $gov  = ./skills/graph/Connect-GraphApi.ps1 -Prefix "GOV" -Environment AzureUSGo
 │   ├── project-positioning.md            # Ecosystem positioning
 │   ├── competitive-landscape.md          # Alternative solutions analysis
 │   └── future-considerations.md          # Optional integration opportunities
+├── mcp/                                  # MCP server for agent integration
+│   └── README.md                         # MCP server setup guide
 ├── .env.example                          # Environment variable template
 ├── config.yaml                           # Example multi-tenant configuration
+├── llms.txt                              # Concise agent discovery context
+├── AGENTS.md                             # Machine-readable agent contract
 └── agents.md                             # Master design specification
 ```
 
@@ -232,6 +266,8 @@ Each service domain has its own `SKILL.md` with domain-specific patterns, toolch
 
 | Document | Purpose |
 |----------|---------|
+| [`AGENTS.md`](AGENTS.md) | Machine-readable agent contract: tools, auth patterns, security boundaries |
+| [`llms.txt`](llms.txt) | Concise agent discovery context |
 | [`agents.md`](agents.md) | Master index: scope, auth hierarchy, file tree |
 | [`docs/auth-patterns.md`](docs/auth-patterns.md) | Decision matrix and scenario-based auth guidance |
 | [`docs/secret-management.md`](docs/secret-management.md) | Secret hierarchy, handling rules, and hard prohibitions |
@@ -308,8 +344,8 @@ See [`docs/multi-tenant-auth.md`](docs/multi-tenant-auth.md) and [`config.yaml`]
 
 When adding a new skill:
 
-1. Follow the normalized auth parameter set defined in [`agents.md`](agents.md).
+1. Follow the normalized auth parameter set defined in [`AGENTS.md`](AGENTS.md).
 2. Use `Common.psm1` for auth context resolution, REST execution, and pagination.
 3. Emit the mandatory warning if client secret auth is used.
 4. Document any service-specific caveats in `docs/patterns-and-caveats.md`.
-5. Update the status table in `agents.md` and the file list in this README.
+5. Update the status table in [`AGENTS.md`](AGENTS.md) and the file list in this README.
