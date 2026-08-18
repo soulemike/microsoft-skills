@@ -2,7 +2,7 @@
 
 [![PowerShell 7.2+](https://img.shields.io/badge/PowerShell-7.2+-blue?logo=powershell)](https://docs.microsoft.com/powershell/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/cloud-api-skills/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/cloud-api-skills)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/soulemike/microsoft-skills/badge)](https://scorecard.dev/viewer/?uri=github.com/soulemike/microsoft-skills)
 
 > **Give your agents secure, governed access to Microsoft 365, Azure, and Sentinel.**
 >
