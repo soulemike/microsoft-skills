@@ -52,6 +52,7 @@ function Get-ModuleSpecifications {
         [pscustomobject]@{ RequestedName = 'Microsoft.Graph.DeviceManagement'; Candidates = @('Microsoft.Graph.DeviceManagement'); Category = 'Microsoft.Graph'; Optional = $false; Purpose = 'Intune v1.0 device management operations' }
         [pscustomobject]@{ RequestedName = 'Microsoft.Graph.Beta.DeviceManagement'; Candidates = @('Microsoft.Graph.Beta.DeviceManagement'); Category = 'Microsoft.Graph.Beta'; Optional = $true; Purpose = 'Intune beta device management operations (SDK alternative to raw REST)' }
         [pscustomobject]@{ RequestedName = 'MSAL.PS'; Candidates = @('MSAL.PS'); Category = 'Optional'; Optional = $true; Purpose = 'Certificate authentication without Azure CLI fallback' }
+        [pscustomobject]@{ RequestedName = 'DLLPickle'; Candidates = @('DLLPickle'); Category = 'Optional'; Optional = $true; Purpose = 'Preload compatible identity assemblies before loading Az and Graph modules to prevent DLL version conflicts. See docs/dll-conflict-mitigation.md.' }
     )
 }
 

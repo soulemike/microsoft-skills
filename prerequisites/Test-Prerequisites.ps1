@@ -60,6 +60,7 @@ function Get-ModuleSpecifications {
         [pscustomobject]@{ RequestedName = 'Microsoft.Graph.DeviceManagement'; Candidates = @('Microsoft.Graph.DeviceManagement'); Optional = $false }
         [pscustomobject]@{ RequestedName = 'Microsoft.Graph.Beta.DeviceManagement'; Candidates = @('Microsoft.Graph.Beta.DeviceManagement'); Optional = $true }
         [pscustomobject]@{ RequestedName = 'MSAL.PS'; Candidates = @('MSAL.PS'); Optional = $true }
+        [pscustomobject]@{ RequestedName = 'DLLPickle'; Candidates = @('DLLPickle'); Optional = $true }
     )
 }
 
@@ -550,7 +551,47 @@ function Test-AuthenticationContext {
     })
 }
 
-$environmentDefinition = Get-EnvironmentDefinition -Cloud $Environment
+function Test-DLLConflictRisk {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object[]]$ModuleChecks
+    )
+
+    $azInstalled = [bool]($ModuleChecks | Where-Object {
+        $_.Installed -and $_.RequestedName -like 'Az.*'
+    } | Select-Object -First 1)
+
+    $graphInstalled = [bool]($ModuleChecks | Where-Object {
+        $_.Installed -and $_.RequestedName -like 'Microsoft.Graph.*'
+    } | Select-Object -First 1)
+
+    $dllPickleInstalled = [bool]($ModuleChecks | Where-Object {
+        $_.Installed -and $_.RequestedName -eq 'DLLPickle'
+    } | Select-Object -First 1)
+
+    $hasRisk = $azInstalled -and $graphInstalled -and -not $dllPickleInstalled
+
+    if ($hasRisk) {
+        return New-CheckResult -Name 'DLLConflictRisk' -Status 'Fail' -Details (
+            'Az and Microsoft.Graph modules are both installed, but DLLPickle is not. ' +
+            'Loading these modules in the same session without preloading a compatible identity assembly set can cause assembly load failures ' +
+            '("Assembly with same name is already loaded"). ' +
+            'Install DLLPickle (Install-Module DLLPickle -Scope CurrentUser) and run Import-DPLibrary before loading service modules. ' +
+            'See docs/dll-conflict-mitigation.md for details and attribution.'
+        ) -Required $false -Data ([pscustomobject]@{
+            AzInstalled = $azInstalled
+            GraphInstalled = $graphInstalled
+            DLLPickleInstalled = $dllPickleInstalled
+        })
+    }
+
+    return New-CheckResult -Name 'DLLConflictRisk' -Status 'Pass' -Details 'No DLL conflict risk detected, or DLLPickle is installed.' -Required $false -Data ([pscustomobject]@{
+        AzInstalled = $azInstalled
+        GraphInstalled = $graphInstalled
+        DLLPickleInstalled = $dllPickleInstalled
+    })
+}
 $moduleSpecifications = Get-ModuleSpecifications
 
 $powerShellCheck = if ($PSVersionTable.PSVersion -ge [version]'7.2.0') {
@@ -585,6 +626,8 @@ else {
     $missingNames = ($missingRequiredModules | Select-Object -ExpandProperty RequestedName) -join ', '
     New-CheckResult -Name 'RequiredModules' -Status 'Fail' -Details "Missing required module(s): $missingNames" -Data $moduleChecks
 }
+
+$dllConflictCheck = Test-DLLConflictRisk -ModuleChecks $moduleChecks
 
 $azCommand = Get-Command az -ErrorAction SilentlyContinue
 $msalInstalled = [bool](($moduleChecks | Where-Object RequestedName -eq 'MSAL.PS').Installed)
@@ -654,6 +697,7 @@ $authenticationCheck = Test-AuthenticationContext -EnvironmentDefinition $enviro
 $checks = @(
     $powerShellCheck
     $moduleSummary
+    $dllConflictCheck
     $azCliCheck
     $networkCheck
     $authenticationCheck

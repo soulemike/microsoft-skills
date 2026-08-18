@@ -34,7 +34,37 @@ For policies, the pattern changes: the list usually gives the policy object, but
 
 ---
 
-## 2. VM Run Command: “Succeeded” Can Still Mean Failure
+## 2. Az + Graph Module DLL Conflicts Are Predictable and Mitigable
+
+Loading `Az.Accounts` and `Microsoft.Graph.Authentication` in the same PowerShell session frequently causes assembly load failures because both bundle different versions of `Microsoft.Identity.Client` and related identity DLLs.
+
+This is not a transient bug — it is a structural consequence of how PowerShell 7 loads assemblies into a single default `AssemblyLoadContext`. The first module to load its version of a shared DLL "wins," and the second module may throw `MissingMethodException` or "Assembly with same name is already loaded."
+
+### Mitigation
+
+1. **Install DllPickle** (optional but recommended):
+   ```powershell
+   Install-Module DLLPickle -Scope CurrentUser
+   ```
+   DllPickle, by Sam Erde ([GitHub](https://github.com/SamErde/DLLPickle)), preloads a curated compatible identity assembly set before service modules load. This project aligns with DllPickle's preload / block classification and runtime reasoning.
+
+2. **Use the conflict-safe loader** provided by this toolkit:
+   ```powershell
+   ./prerequisites/Import-ConflictSafeModules.ps1
+   ```
+   This helper invokes `Import-DPLibrary` if DllPickle is present, otherwise falls back to a manual load-order heuristic (MSAL.PS → Graph → Az).
+
+3. **Check prerequisites** for conflict risk:
+   ```powershell
+   ./prerequisites/Test-Prerequisites.ps1 -Detailed
+   ```
+
+Full details and attribution: [`docs/dll-conflict-mitigation.md`](dll-conflict-mitigation.md)
+
+**Lesson:** do not treat Az + Graph coexistence as safe by default. Preload or order your imports deliberately.
+
+---
+## 3. VM Run Command: “Succeeded” Can Still Mean Failure
 
 `agents.md` calls out a critical guest-management trap: a successful ARM or command status does **not** guarantee the guest script actually worked.
 
@@ -51,7 +81,7 @@ If available, prefer managed Run Command with `treatFailureAsDeploymentFailure=t
 
 ---
 
-## 3. SharePoint Online: Data Plane and Management Plane Are Different Worlds
+## 4. SharePoint Online: Data Plane and Management Plane Are Different Worlds
 
 SharePoint Online is not a single API surface.
 
@@ -76,7 +106,7 @@ It also warns that SharePoint REST and CSOM require a **SharePoint audience toke
 
 ---
 
-## 4. Graph Pagination Must Be a First-Class Behavior
+## 5. Graph Pagination Must Be a First-Class Behavior
 
 Raw Graph REST usage requires explicit handling for:
 
@@ -94,7 +124,7 @@ This matters across Graph-heavy services such as:
 
 ---
 
-## 5. Dataverse File Operations Need Their Own Handling Path
+## 6. Dataverse File Operations Need Their Own Handling Path
 
 The Dataverse guidance in `agents.md` notes that raw REST is the right tool when the workflow requires:
 
@@ -164,6 +194,7 @@ Optionally restrict with `AllowUsers` or `AllowGroups`. Always run `sshd -t` bef
 ## 8. Summary Rules
 
 - Intune collection responses often need enrichment.
+- Az + Graph module DLL conflicts require deliberate preload or load-order management.
 - VM Run Command needs guest-level validation, not just ARM-level validation.
 - SharePoint requires a data-plane vs. management-plane decision up front.
 - Graph pagination and throttling handling are not optional.

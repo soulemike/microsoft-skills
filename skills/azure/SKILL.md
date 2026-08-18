@@ -28,7 +28,7 @@ This skill set covers Azure Resource Manager (ARM) authentication and REST calls
 | Tool | Best For | Token Audience | Limitations in ARM Context |
 |------|----------|----------------|---------------------------|
 | **Azure CLI** (`az`) | Cross-platform scripting, Bicep/ARM deployment, quick ad-hoc commands | `https://management.azure.com/` by default | Not available in all execution contexts (e.g., restricted containers); output parsing can be brittle |
-| **Az PowerShell modules** (`Az.*`) | Native PowerShell pipelines, object-oriented output, Azure Resource Graph | `https://management.azure.com/` by default | Heavy module dependency tree; version conflicts between `Az` and `Microsoft.Graph` modules can occur |
+| **Az PowerShell modules** (`Az.*`) | Native PowerShell pipelines, object-oriented output, Azure Resource Graph | `https://management.azure.com/` by default | Heavy module dependency tree; version conflicts between `Az` and `Microsoft.Graph` modules can occur. Mitigate with `DllPickle` or `./prerequisites/Import-ConflictSafeModules.ps1`. See [docs/dll-conflict-mitigation.md](../../docs/dll-conflict-mitigation.md). |
 | **Bicep / ARM Templates** | Declarative infrastructure; `what-if` validation; policy-driven compliance | ARM deployment identity (service principal or managed identity) | Imperative logic (loops, conditionals) is limited; no direct Graph or Dataverse integration |
 | **Raw REST (`Invoke-RestMethod`)** | Full control over headers, body, and URI for custom ARM operations | `https://management.azure.com/` | Caller must handle pagination, throttling, retry logic, and token refresh manually |
 

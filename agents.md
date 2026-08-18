@@ -185,6 +185,9 @@ These service domains are scoped but not yet implemented in this PowerShell tool
 # Verify environment
 ./prerequisites/Test-Prerequisites.ps1
 
+# Import service modules with conflict-aware ordering (recommended before using multiple Microsoft modules)
+./prerequisites/Import-ConflictSafeModules.ps1
+
 # Run smoke tests (no live auth required)
 ./prerequisites/Test-Smoke.ps1
 
@@ -253,6 +256,7 @@ Downstream skill scripts accept this context via `-AuthContext` (or `-Context` f
 | [docs/token-chaining.md](docs/token-chaining.md) | Cross-service token reuse |
 | [docs/multi-tenant-auth.md](docs/multi-tenant-auth.md) | Multi-context session management |
 | [docs/patterns-and-caveats.md](docs/patterns-and-caveats.md) | Operational lessons learned |
+| [docs/dll-conflict-mitigation.md](docs/dll-conflict-mitigation.md) | Az / Graph DLL version conflict mitigation, with DllPickle alignment and attribution |
 | [docs/project-positioning.md](docs/project-positioning.md) | Ecosystem positioning |
 | [docs/competitive-landscape.md](docs/competitive-landscape.md) | Alternative solutions |
 | [docs/future-considerations.md](docs/future-considerations.md) | Integration opportunities |
