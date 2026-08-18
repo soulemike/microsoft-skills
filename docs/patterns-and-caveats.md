@@ -108,15 +108,70 @@ That matters because file operations are not just “normal JSON CRUD with a big
 
 ---
 
-## 6. Summary Rules
+## 7. VM SSH Server Hardening: Azure-Mediated vs. Guest-Direct
+
+The `vm-guest-management` skillset provides two distinct SSH access models that are often confused:
+
+| Model | Mechanism | Use Case |
+|-------|-----------|----------|
+| **Azure-mediated** | Bastion tunnel, `az vm user update`, VMAccessForLinux extension | Azure-native access without exposing port 22 |
+| **Guest-direct** | Native SSH daemon on VM, public IP + NSG rule | Direct automation, SCP/SFTP, third-party tooling |
+
+### Research findings from related projects
+
+Analysis of `~/projects/anycloud`, `~/projects/harness`, and `~/projects/aiAccelerate` revealed consistent Azure-side patterns but a gap in guest-side hardening:
+
+**What exists (Azure-side provisioning):**
+- `linuxConfiguration.disablePasswordAuthentication: true` in ARM/Bicep templates
+- `ssh.publicKeys[].path: '/home/${adminUsername}/.ssh/authorized_keys'`
+- NSG `AllowSSH` inbound rule on TCP/22 with source IP restriction
+- Deployment helpers that auto-discover local `~/.ssh/id_rsa.pub`
+
+**What was missing across all three projects:**
+- No `sshd_config` template or drop-in configuration
+- No explicit `PermitRootLogin no`, `AllowUsers`, `MaxAuthTries`
+- No host key rotation logic
+- No SSH CA (`TrustedUserCAKeys`) support
+- No validation that `sshd -t` passes before restart
+
+### Anti-pattern to avoid
+
+Some automation scripts use `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null` for ephemeral validation. This is acceptable only for one-time deployment smoke tests. Do not document or default to this for operational SSH access.
+
+### Recommended hardening baseline
+
+When enabling guest-direct SSH, apply a `sshd_config.d` drop-in:
+
+```
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+AuthenticationMethods publickey
+PermitRootLogin no
+MaxAuthTries 3
+ClientAliveInterval 300
+ClientAliveCountMax 2
+LoginGraceTime 60
+X11Forwarding no
+PermitTunnel no
+```
+
+Optionally restrict with `AllowUsers` or `AllowGroups`. Always run `sshd -t` before `systemctl restart sshd`.
+
+**Lesson:** Azure VM provisioning handles key injection and NSG rules, but guest OS sshd hardening is a separate responsibility. Treat them as complementary layers, not alternatives.
+
+---
+
+## 8. Summary Rules
 
 - Intune collection responses often need enrichment.
 - VM Run Command needs guest-level validation, not just ARM-level validation.
 - SharePoint requires a data-plane vs. management-plane decision up front.
 - Graph pagination and throttling handling are not optional.
 - Dataverse file workflows deserve dedicated wrapper logic.
+- Azure-mediated SSH (Bastion, VMAccess) and guest-direct SSH (sshd) are different capabilities; hardening is required for the latter.
 
 Related docs:
 
 - `docs/token-chaining.md`
 - `docs/environment-endpoints.md`
+- `skills/vm-guest-management/SKILL.md`

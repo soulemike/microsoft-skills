@@ -16,6 +16,7 @@ Uses ARM endpoint from environment.
 | Invoke-VmRunCommand.ps1 | Invokes guest scripts via Azure VM Run Command (POST action) or managed Run Command resources (PUT), with instance-level result inspection and optional blob streaming. |
 | Connect-VmBastionSsh.ps1 | Opens Azure Bastion SSH/RDP connections or starts a Bastion tunnel for local SSH/SCP/SFTP/IDE workflows using the Azure CLI. |
 | Invoke-VmSshKeyRotation.ps1 | Rotates/injects VM SSH public keys using append-only guest execution or (for replacement) VMAccessForLinux extension, including optional temporary break-glass users. |
+| Configure-VmSshServer.ps1 | Hardens the OpenSSH server on Azure Linux VMs using Run Command: sshd_config drop-in, password/root disablement, user/group restrictions, host key rotation, SSH CA configuration, and reachability verification. Enables native direct SSH without Azure Bastion proxying. |
 
 ## Toolchain
 | Tool | Best For | Token Audience | Limitations |

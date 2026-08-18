@@ -89,10 +89,11 @@ Each skill is designed as an **independent, composable unit** following PowerShe
 │   │   ├── Get-IntuneConfigurationPolicy.ps1
 │   │   └── Invoke-IntuneGraphRequest.ps1
 │   ├── vm-guest-management/
-│   │   ├── SKILL.md                      # Run Command, Bastion, SSH, examples
+│   │   ├── SKILL.md                      # Run Command, Bastion, SSH patterns
 │   │   ├── Invoke-VmRunCommand.ps1
 │   │   ├── Connect-VmBastionSsh.ps1
-│   │   └── Invoke-VmSshKeyRotation.ps1
+│   │   ├── Invoke-VmSshKeyRotation.ps1
+│   │   └── Configure-VmSshServer.ps1
 │   ├── sharepoint-online/                # Gap — directory placeholder only
 │   │   └── SKILL.md                      # SharePoint Online gap documentation
 │   ├── powerplatform/                    # Covered
