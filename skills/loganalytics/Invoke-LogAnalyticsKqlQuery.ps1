@@ -125,6 +125,7 @@ function Get-KqlErrorMessage {
     }
     catch {
         # Fall back to the raw detail message when the service did not return JSON.
+        Write-Verbose 'Failed to parse KQL error response as JSON' -Verbose
     }
 
     return $detailMessage

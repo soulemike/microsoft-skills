@@ -390,7 +390,8 @@ function Test-SshReachability {
             $tcpClient.Close()
         }
         catch {
-            # Continue polling
+            # Continue polling — port not yet reachable
+            Write-Verbose 'SSH port check failed, continuing to poll' -Verbose
         }
 
         Start-Sleep -Seconds 2

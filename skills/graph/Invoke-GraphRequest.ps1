@@ -126,12 +126,14 @@ function Get-GraphRetryMetadata {
             }
         }
         catch {
+            $statusCode = 0
         }
 
         try {
             $reasonPhrase = $response.ReasonPhrase
         }
         catch {
+            $reasonPhrase = $null
         }
 
         try {
@@ -141,6 +143,7 @@ function Get-GraphRetryMetadata {
             }
         }
         catch {
+            $retryAfter = $null
         }
 
         try {
@@ -149,6 +152,7 @@ function Get-GraphRetryMetadata {
             }
         }
         catch {
+            $rawContent = $null
         }
     }
 
@@ -179,6 +183,7 @@ function Get-GraphRetryMetadata {
             }
         }
         catch {
+            $graphCode = $null
         }
     }
 

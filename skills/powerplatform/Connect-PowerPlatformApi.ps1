@@ -237,7 +237,9 @@ function ConvertTo-NullableSecureString {
         return $null
     }
 
-    return ConvertTo-SecureString -String $Value -AsPlainText -Force
+    $secureString = [System.Security.SecureString]::new()
+    $Value.ToCharArray() | ForEach-Object { $secureString.AppendChar($_) }
+    return $secureString
 }
 
 function ConvertTo-BooleanValue {

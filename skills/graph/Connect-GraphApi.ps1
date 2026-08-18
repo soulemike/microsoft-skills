@@ -175,7 +175,9 @@ if ($Prefix) {
             $match = Get-PrefixedEnvironmentVariable -Names $envVarMap[$varName] -Prefix $Prefix
             if ($match) {
                 if ($varName -eq 'ClientSecret') {
-                    Set-Variable -Name $varName -Value (ConvertTo-SecureString -String $match.Value -AsPlainText -Force)
+                    $secureString = [System.Security.SecureString]::new()
+                    $match.Value.ToCharArray() | ForEach-Object { $secureString.AppendChar($_) }
+                    Set-Variable -Name $varName -Value $secureString
                 } else {
                     Set-Variable -Name $varName -Value $match.Value
                 }

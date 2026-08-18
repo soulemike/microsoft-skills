@@ -180,7 +180,9 @@ if ($Prefix) {
             $match = Get-PrefixedEnvironmentVariable -Names $envVarMap[$varName] -Prefix $Prefix
             if ($match) {
                 if ($varName -eq 'ClientSecret') {
-                    Set-Variable -Name $varName -Value (ConvertTo-SecureString -String $match.Value -AsPlainText -Force)
+                    $secureString = [System.Security.SecureString]::new()
+                    $match.Value.ToCharArray() | ForEach-Object { $secureString.AppendChar($_) }
+                    Set-Variable -Name $varName -Value $secureString
                 } else {
                     Set-Variable -Name $varName -Value $match.Value
                 }
@@ -285,6 +287,7 @@ function ConvertTo-ExpiryDate {
 }
 
 function Resolve-AzureManagedIdentityContext {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', 'arcEndpoint', Justification = 'Variable is assigned in if/else and used later; PSSA cannot trace across conditional blocks.')]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -320,11 +323,11 @@ function Resolve-AzureManagedIdentityContext {
     }
 
     if ($env:IMDS_ENDPOINT -eq 'http://localhost:40342' -or $env:IDENTITY_ENDPOINT -like 'http://localhost:40342/*') {
-        $arcEndpoint = if ($env:IDENTITY_ENDPOINT) {
-            $env:IDENTITY_ENDPOINT
+        if ($env:IDENTITY_ENDPOINT) {
+            $arcEndpoint = $env:IDENTITY_ENDPOINT
         }
         else {
-            'http://localhost:40342/metadata/identity/oauth2/token'
+            $arcEndpoint = 'http://localhost:40342/metadata/identity/oauth2/token'
         }
 
         $queryParts = @(
