@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/soulemike/microsoft-skills/badge)](https://scorecard.dev/viewer/?uri=github.com/soulemike/microsoft-skills)
 
+![Microsoft Cloud API Skills](header.png)
+
 > **Give your agents secure, governed access to Microsoft 365, Azure, and Sentinel.**
 >
 > One auth layer. One secret policy. Zero embedded credentials.
