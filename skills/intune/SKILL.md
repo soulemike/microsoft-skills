@@ -134,6 +134,27 @@ $policies[0].assignments
   - Configuration and settings catalog: `DeviceManagementConfiguration.Read.All` (or `DeviceManagementConfiguration.ReadWrite.All`), plus `DeviceManagementEndpointSecurity.Read.All` (or `DeviceManagementEndpointSecurity.ReadWrite.All`) when required by the endpoint
   - Device health scripts: `DeviceManagementScripts.Read.All` (or `DeviceManagementScripts.ReadWrite.All`)
 
+## Community Resources
+
+### IntuneAutomation
+
+[IntuneAutomation](https://www.intuneautomation.com/) is an open-source Intune PowerShell script library maintained by [UgurLabs](https://ugurlabs.com). It provides 60 production-ready scripts covering devices, compliance, apps, security, reporting, operational tasks, configuration, monitoring, diagnostics, notification, and remediation.
+
+| Attribute | Detail |
+|-----------|--------|
+| **License** | MIT |
+| **Validation** | PSScriptAnalyzer in CI |
+| **Execution modes** | Local PowerShell or Azure Automation runbook |
+| **Auth method** | Interactive or app-only via `Invoke-MgGraphRequest` |
+| **Graph version** | v1.0 and beta |
+
+**Relationship to this skill:** IntuneAutomation is a **complementary domain-specific script library**, not a competitor. It offers breadth (60 ready-to-run scripts) without the cross-service auth governance, secret management, or multi-tenant isolation patterns this toolkit enforces. Teams using this toolkit for auth governance can port IntuneAutomation scripts into the normalized parameter set by replacing their auth blocks with `Connect-GraphApi.ps1` and their REST calls with `Invoke-IntuneGraphRequest.ps1`.
+
+**Companion tools from the same maintainer:**
+- [IntuneBrew](https://intunebrew.com/) — macOS app packaging and deployment via Homebrew
+- [IntuneGet](https://intuneget.com/) — Windows app packaging and deployment automation
+- [TenuVault](https://tenuvault.com/) — Tenant-level backup and restore for Intune policies, profiles, and apps
+
 ## Related Docs
 - [Auth Patterns](../docs/auth-patterns.md)
 - [Patterns and Caveats](../docs/patterns-and-caveats.md)

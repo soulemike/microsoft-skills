@@ -105,6 +105,9 @@ A research pass identified the following MCP servers organized by the service do
 | **Lokka** | [merill/lokka](https://github.com/merill/lokka) | Community | Supports Intune device configuration policy queries via Graph |
 | **Microsoft 365 MCP** | [softeria/ms-365-mcp-server](https://github.com/softeria/ms-365-mcp-server) | Community | Device management tools via Graph |
 
+**Validated script library (non-MCP):**
+- **[IntuneAutomation](https://www.intuneautomation.com/)** — 60 open-source Intune PowerShell scripts (devices, compliance, apps, security, reporting, operational, configuration, monitoring, diagnostics, notification, remediation). MIT licensed, PSScriptAnalyzer validated in CI, supports local and Azure Automation runbook execution. Auth is interactive or app-only via `Invoke-MgGraphRequest`; no enterprise auth hierarchy or multi-tenant isolation. Complementary to this toolkit — scripts can be ported to the normalized auth parameter set by swapping auth blocks for `Connect-GraphApi.ps1` and REST calls for `Invoke-IntuneGraphRequest.ps1`.
+
 ### 2.7 VM Guest Management
 
 | Server | Repo | Official? | Notes |

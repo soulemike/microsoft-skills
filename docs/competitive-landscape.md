@@ -101,6 +101,15 @@ Research identified several community projects that attempt consolidation. Ranke
 - **Scope:** Sentinel Workspace Manager (Preview) via PowerShell
 - **Overlap:** **Low.** Very narrow scope, preview feature only, stale.
 
+### 3.8 IntuneAutomation
+- **Website:** https://www.intuneautomation.com/
+- **Repo:** https://github.com/ugurkocde/IntuneAutomation
+- **Status:** Active (latest commit 2026-08-17)
+- **Scope:** 60 open-source Intune PowerShell scripts for devices, compliance, apps, security, reporting, operational tasks, configuration, monitoring, diagnostics, notification, and remediation. Ships with both local and Azure Automation runbook execution paths.
+- **Auth:** Interactive or app-only via `Invoke-MgGraphRequest`. No unified auth abstraction or hierarchy.
+- **Overlap:** **Low-Medium.** Intune-only script library. Complementary rather than competitive — it provides breadth of ready-to-run scripts; this project provides cross-service auth governance and enterprise patterns.
+- **Differentiation:** IntuneAutomation is a domain-specific script collection. This project is a multi-service toolkit with normalized auth, secret management, and multi-tenant isolation.
+
 ---
 
 ## 4. Cross-Platform Alternatives
@@ -210,6 +219,7 @@ A new class of competitors has emerged around the Model Context Protocol (MCP). 
 | **EntraAuth** | Entra APIs | Yes | Partial | No | Yes | **Medium** |
 | **MgGraphCommunity** | Graph only | Yes | Partial | Yes | Yes | **Low** |
 | **Sentinel-As-Code** | Sentinel only | No (OIDC/SP) | No (IaC) | No | Yes | **Low** |
+| **IntuneAutomation** | Intune only | No | Yes | No | Yes | **Low-Medium** |
 | **Python SDKs** | Wide | Via `azure-identity` | Yes | Partial | Yes | **Cross-platform alt** |
 | **Terraform Providers** | Azure + M365 partial | No | No (IaC) | Partial | Yes | **Complementary** |
 | **CLIs (`az`, `m365`, `pac`)** | Service-specific | No | Yes | Limited | Yes | **Complementary** |

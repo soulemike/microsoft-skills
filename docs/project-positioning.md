@@ -42,7 +42,7 @@ It is **imperative automation** (scripts and runbooks), not infrastructure-as-co
 │  │   └─ Fragmented auth; each module has its own Connect-* cmdlet           │
 │  ├── Community Auth Wrappers (EntraAuth, MgGraphCommunity)                  │
 │  │   └─ Unified auth but no service-specific domain logic                   │
-│  ├── Service-Specific Toolkits (Sentinel-As-Code, M365DSC)                  │
+│  ├── Service-Specific Toolkits (Sentinel-As-Code, M365DSC, IntuneAutomation) │
 │  │   └─ Deep in one domain; no cross-service orchestration                  │
 │  └── Cross-Platform SDKs (Python azure-identity, Go SDKs)                   │
 │      └─ Same problems, different languages                                  │
