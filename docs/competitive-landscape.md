@@ -10,7 +10,7 @@
 | Dimension | Description |
 |-----------|-------------|
 | **Language** | PowerShell (primary), Python (auxiliary), Bicep / Azure CLI |
-| **Services covered** | Microsoft Graph, Azure ARM, Dataverse / Power Platform, Copilot Studio, Azure Monitor / Log Analytics, Microsoft Sentinel, Microsoft Teams, Intune / Endpoint Manager, SharePoint Online (gaps: VM Guest Mgmt, Purview, Defender, Fabric, DevOps, Exchange) |
+| **Services covered** | Microsoft Graph, Azure ARM, Dataverse / Power Platform, Copilot Studio, Azure Monitor / Log Analytics, Microsoft Sentinel, Microsoft Teams, Intune / Endpoint Manager, Shar[...]
 | **Auth patterns** | Managed Identity (system/user-assigned), Federated Credentials (OIDC), Certificate-based, Client Credentials (with mandatory runtime warning) |
 | **Enterprise features** | Multi-tenant context isolation, prefixed environment variables, normalized parameter sets, secret management hierarchy, no embedded secrets |
 | **Audience** | IT pros, cloud engineers, automation developers writing runbooks, pipelines, and operational scripts |
@@ -24,9 +24,9 @@ Microsoft publishes service-specific modules that collectively cover the same su
 
 | Module | Service | Auth Entry Point | Overlap with This Project |
 |--------|---------|------------------|---------------------------|
-| `Az.*` (200+ modules) | Azure ARM, Monitor, Sentinel mgmt plane | `Connect-AzAccount` | **High** for Azure ARM skills; official modules are more feature-complete but lack the normalized auth parameter set and multi-tenant context isolation patterns documented here |
-| `Microsoft.Graph.*` (40+ modules) | Microsoft Graph (identity, Teams, Intune, SharePoint partial) | `Connect-MgGraph` | **High** for Graph, Teams, Intune skills; official SDK handles pagination and strong typing but has a large module footprint and confusing app-only vs. delegated context |
-| `PnP.PowerShell` | SharePoint Online | `Connect-PnPOnline` | **High** for SharePoint skills; community-driven (no Microsoft SLA), modern app-only requires certificate or managed identity (no client secrets) |
+| `Az.*` (200+ modules) | Azure ARM, Monitor, Sentinel mgmt plane | `Connect-AzAccount` | **High** for Azure ARM skills; official modules are more feature-complete but lack the normalized auth par[...]
+| `Microsoft.Graph.*` (40+ modules) | Microsoft Graph (identity, Teams, Intune, SharePoint partial) | `Connect-MgGraph` | **High** for Graph, Teams, Intune skills; official SDK handles pagination [...]
+| `PnP.PowerShell` | SharePoint Online | `Connect-PnPOnline` | **High** for SharePoint skills; community-driven (no Microsoft SLA), modern app-only requires certificate or managed identity (no cli[...]
 | `MicrosoftTeams` | Teams | `Connect-MicrosoftTeams` | **Medium**; Teams-specific cmdlets overlap with Graph-based Teams operations in this project |
 | `ExchangeOnlineManagement` | Exchange Online | `Connect-ExchangeOnline` | **Low** (Exchange is a documented gap in this project) |
 | `Microsoft.PowerApps.Administration.PowerShell` | Power Platform admin | `Add-PowerAppsAccount` | **Medium** for Power Platform environment management |
@@ -36,13 +36,13 @@ Microsoft publishes service-specific modules that collectively cover the same su
 
 ### Key Gaps in Official Modules
 
-1. **No unified auth abstraction.** Each module has its own connection cmdlet (`Connect-AzAccount`, `Connect-MgGraph`, `Connect-PnPOnline`, etc.) with different parameter names and behaviors. There is no cross-module normalized parameter set (`-AuthenticationType`, `-TenantId`, `-FederatedToken`, etc.).
-2. **No multi-tenant session isolation.** Official modules typically rely on module-scoped variables. Switching tenants requires disconnecting and reconnecting, or juggling multiple PowerShell sessions.
+1. **No unified auth abstraction.** Each module has its own connection cmdlet (`Connect-AzAccount`, `Connect-MgGraph`, `Connect-PnPOnline`, etc.) with different parameter names and behaviors. Ther[...]
+2. **No multi-tenant session isolation.** Official modules typically rely on module-scoped variables. Switching tenants requires disconnecting and reconnecting, or juggling multiple PowerShell ses[...]
 3. **No auth preference hierarchy.** Official modules support the same auth methods individually, but none enforce a hierarchy or emit security warnings (e.g., client secret usage).
 4. **No cross-service token chaining guidance.** While `Get-AzAccessToken -ResourceTypeName MSGraph` exists, the patterns and caveats are not documented as a cohesive workflow.
-5. **No secret management enforcement.** Official modules accept credentials in various formats (some accept plain strings, some require SecureString) with no consistent secret hierarchy or Key Vault integration pattern.
+5. **No secret management enforcement.** Official modules accept credentials in various formats (some accept plain strings, some require SecureString) with no consistent secret hierarchy or Key Va[...]
 
-**Verdict:** Official modules are **complementary building blocks** that this project wraps and orchestrates. This project adds value through auth unification, secret governance, and multi-tenant context management.
+**Verdict:** Official modules are **complementary building blocks** that this project wraps and orchestrates. This project adds value through auth unification, secret governance, and multi-tenant [...] 
 
 ---
 
@@ -55,7 +55,7 @@ Research identified several community projects that attempt consolidation. Ranke
 - **Status:** Active (latest commit 2026-08-13)
 - **Scope:** Declarative Desired State Configuration for Exchange Online, Teams, SharePoint, OneDrive, Security & Compliance, Power Platform, Intune, Planner
 - **Auth:** Maps each workload to its official module's auth (Graph SDK, Az.Accounts, PnP, ExchangeOnlineManagement, MicrosoftTeams). Supports user credentials or Service Principal.
-- **Overlap:** **Medium-High.** Covers many of the same M365 services but from a *declarative configuration* angle (DSC), not an *imperative automation* angle. It is a configuration management framework, not a runbook toolkit. It does not provide the same request wrappers, pagination handling, or auth abstraction hierarchy.
+- **Overlap:** **Medium-High.** Covers many of the same M365 services but from a *declarative configuration* angle (DSC), not an *imperative automation* angle. It is a configuration management fra[...]
 - **Differentiation:** This project is imperative scripting; M365DSC is declarative state enforcement.
 
 ### 3.2 EntraAuth
@@ -63,7 +63,7 @@ Research identified several community projects that attempt consolidation. Ranke
 - **Status:** Active (latest commit 2026-06-08)
 - **Scope:** Unified authentication and request execution for any Entra-backed API (Graph, Security API, Azure Key Vault, etc.)
 - **Auth:** `Connect-EntraService` with flows for Browser, DeviceCode, ClientSecret, Certificate, Managed Identity, Azure Key Vault
-- **Overlap:** **Medium.** It is the closest community equivalent to the auth layer in this project. It unifies auth but stops at token acquisition/request execution. It does not provide service-specific wrappers (Sentinel ARM paths, Dataverse OData, Intune beta endpoints, etc.).
+- **Overlap:** **Medium.** It is the closest community equivalent to the auth layer in this project. It unifies auth but stops at token acquisition/request execution. It does not provide service-s[...]
 - **Differentiation:** EntraAuth is a generic auth + HTTP client; this project is service-specific automation with deep domain knowledge.
 
 ### 3.3 MgGraphCommunity
@@ -105,10 +105,16 @@ Research identified several community projects that attempt consolidation. Ranke
 - **Website:** https://www.intuneautomation.com/
 - **Repo:** https://github.com/ugurkocde/IntuneAutomation
 - **Status:** Active (latest commit 2026-08-17)
-- **Scope:** 60 open-source Intune PowerShell scripts for devices, compliance, apps, security, reporting, operational tasks, configuration, monitoring, diagnostics, notification, and remediation. Ships with both local and Azure Automation runbook execution paths.
+- **Scope:** 60 open-source Intune PowerShell scripts for devices, compliance, apps, security, reporting, operational tasks, configuration, monitoring, diagnostics, notification, and remediation.[...]
 - **Auth:** Interactive or app-only via `Invoke-MgGraphRequest`. No unified auth abstraction or hierarchy.
-- **Overlap:** **Low-Medium.** Intune-only script library. Complementary rather than competitive — it provides breadth of ready-to-run scripts; this project provides cross-service auth governance and enterprise patterns.
+- **Overlap:** **Low-Medium.** Intune-only script library. Complementary rather than competitive — it provides breadth of ready-to-run scripts; this project provides cross-service auth governan[...]
 - **Differentiation:** IntuneAutomation is a domain-specific script collection. This project is a multi-service toolkit with normalized auth, secret management, and multi-tenant isolation.
+
+### 3.9 MIAU
+- **Repo:** https://github.com/HCRitter/MIAU
+- **Scope:** Microsoft automation and agent-oriented tooling in the same broader ecosystem as this project.
+- **Overlap:** **Medium.** It sits in the same Microsoft automation / agent-skill space, but it is not a direct duplicate of this project’s cross-service auth and governance model.
+- **Differentiation:** This project remains centered on secure, unified PowerShell access across Microsoft cloud services; MIAU is best treated as a complementary ecosystem project in the adjacent agent-skills space.
 
 ---
 
@@ -122,19 +128,19 @@ Research identified several community projects that attempt consolidation. Ranke
 | `azure-sdk-for-python` (200+ packages) | Azure ARM, Monitor, Sentinel | `azure-identity` | High for Azure skills; comprehensive but sprawling |
 | `msal` (Python) | Entra ID token acquisition | Standalone | Medium; handles auth flows but no service-specific APIs |
 
-**Auth comparison:** Python's `azure-identity` library provides a unified credential chain (`DefaultAzureCredential`) that probes Managed Identity → Env Vars → Azure CLI → Azure PowerShell → Interactive Browser. This is conceptually similar to this project's auth detection hierarchy but is Python-specific and does not support federated credentials (OIDC) as seamlessly across all contexts.
+**Auth comparison:** Python's `azure-identity` library provides a unified credential chain (`DefaultAzureCredential`) that probes Managed Identity → Env Vars → Azure CLI → Azure PowerShell [...]
 
-**Verdict:** Python SDKs are **cross-platform alternatives** for teams that prefer Python over PowerShell. They do not overlap directly with this PowerShell-centric project but solve the same problems in a different ecosystem.
+**Verdict:** Python SDKs are **cross-platform alternatives** for teams that prefer Python over PowerShell. They do not overlap directly with this PowerShell-centric project but solve the same pro[...]
 
 ### 4.2 Terraform Providers
 
 | Provider | Scope | Overlap |
-|----------|-------|---------|
+|----------|-------|--------|
 | `hashicorp/azuread` | Entra ID (users, groups, apps, policies) | Medium for Graph identity automation |
 | `hashicorp/azurerm` | Azure ARM resources | High for Azure ARM skills |
 | `microsoft365dsc` (community) | M365 configuration | Medium for M365 service config |
 
-**Verdict:** Terraform is **declarative infrastructure-as-code**, not imperative automation. It covers resource provisioning and drift detection but cannot handle operational tasks like ad-hoc KQL queries, incident triage, or agent deployment. Complementary, not overlapping.
+**Verdict:** Terraform is **declarative infrastructure-as-code**, not imperative automation. It covers resource provisioning and drift detection but cannot handle operational tasks like ad-hoc KQ[...]
 
 ### 4.3 CLI Wrappers & Universal CLIs
 
@@ -144,7 +150,7 @@ Research identified several community projects that attempt consolidation. Ranke
 | `m365` (PnP CLI) | M365, Teams, SharePoint, Planner | Medium for Teams/SharePoint skills; community-driven |
 | `pac` (Power Platform CLI) | Power Platform, Dataverse, Copilot Studio | Medium for Power Platform/Dataverse skills; does not expose all entity fields |
 
-**Verdict:** These CLIs are **individual service interfaces**. No universal CLI unifies all the services this project covers with a consistent auth model. This project's value is in orchestrating across multiple CLIs/modules with normalized auth.
+**Verdict:** These CLIs are **individual service interfaces**. No universal CLI unifies all the services this project covers with a consistent auth model. This project's value is in orchestrating[...]
 
 ### 4.4 Other Language SDKs
 
@@ -160,7 +166,7 @@ Research identified several community projects that attempt consolidation. Ranke
 
 ### 4.4 MCP Ecosystem (Agent-Facing Layer)
 
-A new class of competitors has emerged around the Model Context Protocol (MCP). These are not direct competitors to a human-facing PowerShell toolkit, but they occupy the "agent layer" that this project does not currently target.
+A new class of competitors has emerged around the Model Context Protocol (MCP). These are not direct competitors to a human-facing PowerShell toolkit, but they occupy the "agent layer" that this [...]
 
 | MCP Server / Tool | Service | Auth | Overlap |
 |-------------------|---------|------|---------|
@@ -180,7 +186,7 @@ A new class of competitors has emerged around the Model Context Protocol (MCP). 
 4. Secret management enforcement
 5. PowerShell-native delivery
 
-**Verdict:** MCP servers are **complementary agent-facing infrastructure**, not direct competitors. The shortest path to bridge this project to the MCP ecosystem is documented in `docs/future-considerations.md`.
+**Verdict:** MCP servers are **complementary agent-facing infrastructure**, not direct competitors. The shortest path to bridge this project to the MCP ecosystem is documented in `docs/future-con[...]
 
 ---
 
@@ -220,6 +226,7 @@ A new class of competitors has emerged around the Model Context Protocol (MCP). 
 | **MgGraphCommunity** | Graph only | Yes | Partial | Yes | Yes | **Low** |
 | **Sentinel-As-Code** | Sentinel only | No (OIDC/SP) | No (IaC) | No | Yes | **Low** |
 | **IntuneAutomation** | Intune only | No | Yes | No | Yes | **Low-Medium** |
+| **MIAU** | Microsoft automation / agent-oriented tooling | Partial | Yes | Limited | Public | **Medium** |
 | **Python SDKs** | Wide | Via `azure-identity` | Yes | Partial | Yes | **Cross-platform alt** |
 | **Terraform Providers** | Azure + M365 partial | No | No (IaC) | Partial | Yes | **Complementary** |
 | **CLIs (`az`, `m365`, `pac`)** | Service-specific | No | Yes | Limited | Yes | **Complementary** |
@@ -235,7 +242,7 @@ A new class of competitors has emerged around the Model Context Protocol (MCP). 
 **No direct competitor** was found that combines all of the following:
 1. **Multi-service coverage** (Graph + ARM + Dataverse + Power Platform + Sentinel + Teams + Intune + SharePoint)
 2. **Imperative automation** (scripts/runbooks, not IaC/DSC)
-3. **Unified auth abstraction** with a strict preference hierarchy and runtime warnings
+3. **Unified auth abstraction** with a strict security preference hierarchy and runtime warnings
 4. **Multi-tenant context isolation** with explicit session state objects
 5. **Secret management enforcement** (no embedded secrets, SecureString, Key Vault patterns)
 6. **PowerShell-native** delivery
@@ -249,6 +256,6 @@ A new class of competitors has emerged around the Model Context Protocol (MCP). 
 
 ### Positioning
 
-This project occupies a **unique niche:** it is an **enterprise PowerShell automation toolkit** that prioritizes **auth governance, secret management, and multi-tenant safety** over feature breadth in any single service. It is best understood as a **higher-order orchestration layer** atop official modules and REST APIs, not a replacement for them.
+This project occupies a **unique niche:** it is an **enterprise PowerShell automation toolkit** that prioritizes **auth governance, secret management, and multi-tenant safety** over feature breadth.
 
-**Recommendation:** Continue as a standalone project. The primary integration risk is not competition but **obsolescence** as official modules improve their auth unification (e.g., if `Az.Accounts` or `Microsoft.Graph.Authentication` ever adopt a normalized cross-module auth model). Monitor official module release notes for auth convergence.
+**Recommendation:** Continue as a standalone project. The primary integration risk is not competition but **obsolescence** as official modules improve their auth unification (e.g., if `Az.Account[...]
