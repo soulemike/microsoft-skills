@@ -36,7 +36,7 @@ $ctx = ./prerequisites/Setup-AuthenticationContext.ps1 -Resource "https://manage
 
 ## What This Is
 
-This project provides reusable, composable PowerShell skills for interacting with Microsoft Graph, Azure Resource Manager, Dataverse, Microsoft Sentinel, Microsoft Teams, Intune, and VM Guest Management. It prioritizes **security-first authentication** and **consistent patterns** across all service domains.
+This project provides reusable, composable PowerShell skills for interacting with Microsoft Graph, Azure Resource Manager, Dataverse, Microsoft Sentinel, Microsoft Teams, Intune, and VM Guest Management.
 
 **Core principle:** No secret material is embedded in any skill. All authentication follows a strict preference hierarchy with runtime enforcement.
 
@@ -230,8 +230,7 @@ $gov  = ./skills/graph/Connect-GraphApi.ps1 -Prefix "GOV" -Environment AzureUSGo
 │   ├── token-chaining.md                 # Cross-service token reuse patterns
 │   ├── patterns-and-caveats.md           # Per-service lessons learned
 │   ├── multi-tenant-auth.md              # Multi-context session management
-│   ├── project-positioning.md            # Ecosystem positioning
-│   ├── competitive-landscape.md          # Alternative solutions analysis
+│   ├── landscape.md                      # Ecosystem and collaboration landscape
 │   └── future-considerations.md          # Optional integration opportunities
 ├── mcp/                                  # MCP server for agent integration
 │   └── README.md                         # MCP server setup guide
@@ -277,8 +276,7 @@ Each service domain has its own `SKILL.md` with domain-specific patterns, toolch
 | [`docs/token-chaining.md`](docs/token-chaining.md) | Reusing Azure context for Graph, Dataverse, and other audiences |
 | [`docs/multi-tenant-auth.md`](docs/multi-tenant-auth.md) | Multi-context session isolation with config files and prefixed env vars |
 | [`docs/patterns-and-caveats.md`](docs/patterns-and-caveats.md) | Operational lessons: Intune list-vs-get, VM Run Command traps, Graph pagination |
-| [`docs/project-positioning.md`](docs/project-positioning.md) | Where this project sits in the Microsoft cloud automation ecosystem |
-| [`docs/competitive-landscape.md`](docs/competitive-landscape.md) | Comparison with official modules, community tools, and cross-platform alternatives |
+| [`docs/landscape.md`](docs/landscape.md) | Ecosystem reference and collaboration landscape for Microsoft cloud automation |
 | [`docs/future-considerations.md`](docs/future-considerations.md) | Potential bridges to MCP servers, skill marketplaces, and upstream contributions |
 | [`docs/lsp-recommendations.md`](docs/lsp-recommendations.md) | Language Server Protocol guidance for contributors |
 
@@ -290,14 +288,14 @@ Each service domain has its own `SKILL.md` with domain-specific patterns, toolch
 |----------------|-----------|-------|------------------|
 | **Graph** | [SKILL.md](skills/graph/SKILL.md) | `Connect-GraphApi.ps1`, `Invoke-GraphRequest.ps1`, 4 auth wrappers | App-only auth, pagination, throttling, retry |
 | **Azure ARM** | [SKILL.md](skills/azure/SKILL.md) | `Connect-AzureApi.ps1`, `Invoke-AzureRestMethod.ps1`, 3 auth wrappers | REST wrapper with async operation handling |
-| **Dataverse** | [SKILL.md](skills/dataverse/SKILL.md) | `Connect-DataverseApi.ps1`, `Invoke-DataverseRequest.ps1`, `Get-DataverseEnvironment.ps1`, 4 auth wrappers | OData queries, GDS environment discovery |
-| **Sentinel** | [SKILL.md](skills/sentinel/SKILL.md) | `Invoke-SentinelArmRequest.ps1`, `Get-SentinelIncident.ps1`, `Get-SentinelAlertRule.ps1` | ARM management plane (incidents, alert rules, watchlists) |
-| **Log Analytics** | [SKILL.md](skills/loganalytics/SKILL.md) | `Connect-LogAnalyticsApi.ps1`, `Invoke-LogAnalyticsKqlQuery.ps1`, `New-LogAnalyticsWorkspace.ps1`, `New-LogAnalyticsCustomTable.ps1`, `New-LogAnalyticsIngestionPipeline.ps1`, `Send-LogAnalyticsData.ps1`, 4 auth wrappers | KQL queries, workspace lifecycle, DCE/DCR provisioning, DCR-first ingestion with Data Collector fallback |
+| **Dataverse** | [SKILL.md](skills/dataverse/SKILL.md) | `Connect-DataverseApi.ps1`, `Invoke-DataverseRequest.ps1`, `Get-DataverseEnvironment.ps1`, 4 auth wrappers | OData queries, GDS environme[...]
+| **Sentinel** | [SKILL.md](skills/sentinel/SKILL.md) | `Invoke-SentinelArmRequest.ps1`, `Get-SentinelIncident.ps1`, `Get-SentinelAlertRule.ps1` | ARM management plane (incidents, alert rules, wa[...]
+| **Log Analytics** | [SKILL.md](skills/loganalytics/SKILL.md) | `Connect-LogAnalyticsApi.ps1`, `Invoke-LogAnalyticsKqlQuery.ps1`, `New-LogAnalyticsWorkspace.ps1`, `New-LogAnalyticsCustomTable.ps[...]` | Workspace lifecycle, KQL, ingestion, and diagnostics |
 | **Teams** | [SKILL.md](skills/teams/SKILL.md) | `Get-TeamsChannel.ps1`, `Get-TeamsMember.ps1`, `Invoke-TeamsGraphRequest.ps1` | Graph v1.0 Teams endpoints |
-| **Intune** | [SKILL.md](skills/intune/SKILL.md) | `Get-IntuneDevice.ps1`, `Get-IntuneConfigurationPolicy.ps1`, `Invoke-IntuneGraphRequest.ps1` | v1.0 + beta endpoint support, list-vs-get handling |
-| **VM Guest Management** | [SKILL.md](skills/vm-guest-management/SKILL.md) | `Invoke-VmRunCommand.ps1`, `Connect-VmBastionSsh.ps1`, `Invoke-VmSshKeyRotation.ps1` | Run Command (action + managed), Bastion SSH, SSH key lifecycle |
-| **Power Platform / BAP** | [SKILL.md](skills/powerplatform/SKILL.md) | `Connect-PowerPlatformApi.ps1`, `Get-PowerPlatformEnvironment.ps1` | BAP API auth with ARM-scoped token, admin environment listing with pagination |
-| **Copilot Studio** | [SKILL.md](skills/copilotstudio/SKILL.md) | `Deploy-CopilotAgent.ps1`, `Get-CopilotAgentInfo.ps1`, `Manage-CopilotKnowledge.ps1` | Agent publish/unpublish/update via Dataverse, knowledge source CRUD with customizable entity sets |
+| **Intune** | [SKILL.md](skills/intune/SKILL.md) | `Get-IntuneDevice.ps1`, `Get-IntuneConfigurationPolicy.ps1`, `Invoke-IntuneGraphRequest.ps1` | v1.0 + beta endpoint support, list-vs-get handli[...]
+| **VM Guest Management** | [SKILL.md](skills/vm-guest-management/SKILL.md) | `Invoke-VmRunCommand.ps1`, `Connect-VmBastionSsh.ps1`, `Invoke-VmSshKeyRotation.ps1` | Run Command (action + managed)[...]
+| **Power Platform / BAP** | [SKILL.md](skills/powerplatform/SKILL.md) | `Connect-PowerPlatformApi.ps1`, `Get-PowerPlatformEnvironment.ps1` | BAP API auth with ARM-scoped token, admin environment[...]
+| **Copilot Studio** | [SKILL.md](skills/copilotstudio/SKILL.md) | `Deploy-CopilotAgent.ps1`, `Get-CopilotAgentInfo.ps1`, `Manage-CopilotKnowledge.ps1` | Agent publish/unpublish/update via Datave[...]
 
 ---
 
