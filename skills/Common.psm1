@@ -546,6 +546,503 @@ function Get-PrefixedEnvironmentVariable {
 }
 
 # ---------------------------------------------------------------------------
+# Asset Inventory Management
+# ---------------------------------------------------------------------------
+# Provides scaffolding for users to track and manage cloud assets created
+# or interacted with through project skills. Inventories are stored as YAML
+# in a user-managed directory (assets/ by default, gitignored).
+# ---------------------------------------------------------------------------
+
+function Get-AssetInventoryPath {
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventoryDir = Resolve-Path -Path $BasePath -ErrorAction SilentlyContinue
+    if (-not $inventoryDir) {
+        $inventoryDir = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $BasePath))
+    }
+
+    if (-not (Test-Path $inventoryDir)) {
+        New-Item -ItemType Directory -Path $inventoryDir -Force | Out-Null
+    }
+
+    return Join-Path $inventoryDir "$InventoryName.yaml"
+}
+
+function Get-AssetInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventoryPath = Get-AssetInventoryPath -InventoryName $InventoryName -BasePath $BasePath
+
+    if (-not (Test-Path $inventoryPath)) {
+        return @{
+            apiVersion = 'v1'
+            kind = 'AssetInventory'
+            metadata = @{
+                name = $InventoryName
+                lastUpdated = (Get-Date -Format 'o')
+            }
+            spec = @{
+                assets = @()
+            }
+        }
+    }
+
+    $yamlContent = Get-Content -Path $inventoryPath -Raw -ErrorAction Stop
+    # Simple YAML parsing for the expected structure
+    # For production use, consider installing powershell-yaml module
+    return ConvertFrom-AssetInventoryYaml -Content $yamlContent
+}
+
+function ConvertFrom-AssetInventoryYaml {
+    [CmdletBinding()]
+    param([string]$Content)
+
+    # Fallback parser when powershell-yaml is not available
+    # Handles the minimal structure produced by this module
+    $inventory = @{
+        apiVersion = 'v1'
+        kind = 'AssetInventory'
+        metadata = @{}
+        spec = @{ assets = @() }
+    }
+
+    $lines = $Content -split "`r?`n"
+    $inAssets = $false
+    $currentAsset = $null
+    $currentNested = $null
+    $nestedKey = $null
+
+    foreach ($line in $lines) {
+        $trimmed = $line.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith('#')) { continue }
+
+        $indent = $line.Length - $line.TrimStart().Length
+
+        if ($indent -eq 0 -and $trimmed -match '^(\w+):\s*(.*)$') {
+            $key = $Matches[1].Trim()
+            $value = $Matches[2].Trim().Trim("'", '"')
+            switch ($key) {
+                'apiVersion' { $inventory.apiVersion = $value }
+                'kind' { $inventory.kind = $value }
+            }
+            $inAssets = $false
+            $currentAsset = $null
+            $currentNested = $null
+            $nestedKey = $null
+            continue
+        }
+
+        if ($indent -eq 2 -and $trimmed -match '^(\w+):\s*(.*)$') {
+            $key = $Matches[1].Trim()
+            $value = $Matches[2].Trim().Trim("'", '"')
+            if ($key -eq 'assets') {
+                $inAssets = $true
+                $currentAsset = $null
+                $currentNested = $null
+                $nestedKey = $null
+            }
+            else {
+                $inventory.metadata[$key] = $value
+                $inAssets = $false
+            }
+            continue
+        }
+
+        if ($inAssets -and $indent -eq 4 -and $trimmed -match '^-\s*(\w+):\s*(.*)$') {
+            if ($currentAsset) {
+                $inventory.spec.assets += $currentAsset
+            }
+            $currentAsset = @{
+                ($Matches[1].Trim()) = $Matches[2].Trim().Trim("'", '"')
+            }
+            $currentNested = $null
+            $nestedKey = $null
+            continue
+        }
+
+        if ($inAssets -and $currentAsset -and $indent -eq 6 -and $trimmed -match '^(\w+):\s*(.*)$') {
+            $key = $Matches[1].Trim()
+            $value = $Matches[2].Trim().Trim("'", '"')
+            if ($key -eq 'tags' -or $key -eq 'properties' -or $key -eq 'authContextRef') {
+                $currentNested = @{}
+                $currentAsset[$key] = $currentNested
+                $nestedKey = $key
+            }
+            else {
+                $currentAsset[$key] = $value
+                $currentNested = $null
+                $nestedKey = $null
+            }
+            continue
+        }
+
+        if ($inAssets -and $currentNested -and $indent -eq 8 -and $trimmed -match '^(\w+):\s*(.*)$') {
+            $key = $Matches[1].Trim()
+            $value = $Matches[2].Trim().Trim("'", '"')
+            $currentNested[$key] = $value
+            continue
+        }
+    }
+
+    if ($currentAsset) {
+        $inventory.spec.assets += $currentAsset
+    }
+
+    return $inventory
+}
+
+function ConvertTo-AssetInventoryYaml {
+    [CmdletBinding()]
+    param([hashtable]$Inventory)
+
+    $sb = [System.Text.StringBuilder]::new()
+    [void]$sb.AppendLine("# Asset Inventory")
+    [void]$sb.AppendLine("# This file tracks cloud assets managed through Microsoft Cloud API Skills.")
+    [void]$sb.AppendLine("# Do NOT commit real resource IDs or sensitive data to version control.")
+    [void]$sb.AppendLine("---")
+    [void]$sb.AppendLine("apiVersion: $($Inventory.apiVersion)")
+    [void]$sb.AppendLine("kind: $($Inventory.kind)")
+    [void]$sb.AppendLine("metadata:")
+
+    foreach ($key in $Inventory.metadata.Keys | Sort-Object) {
+        $value = $Inventory.metadata[$key]
+        if ($value -is [datetime]) {
+            $value = $value.ToString('o')
+        }
+        [void]$sb.AppendLine("  $key`: `"$value`"")
+    }
+
+    [void]$sb.AppendLine("spec:")
+    [void]$sb.AppendLine("  assets:")
+
+    foreach ($asset in $Inventory.spec.assets) {
+        [void]$sb.AppendLine("    - id: `"$($asset.id)`"")
+        foreach ($key in ($asset.Keys | Where-Object { $_ -ne 'id' } | Sort-Object)) {
+            $value = $asset[$key]
+            if ($value -is [hashtable] -or $value -is [System.Collections.Specialized.OrderedDictionary]) {
+                [void]$sb.AppendLine("      $key`:")
+                foreach ($subKey in $value.Keys | Sort-Object) {
+                    $subValue = $value[$subKey]
+                    [void]$sb.AppendLine("        $subKey`: `"$subValue`"")
+                }
+            }
+            elseif ($value -is [array] -or $value -is [System.Collections.IList]) {
+                [void]$sb.AppendLine("      $key`:")
+                foreach ($item in $value) {
+                    [void]$sb.AppendLine("        - `"$item`"")
+                }
+            }
+            else {
+                [void]$sb.AppendLine("      $key`: `"$value`"")
+            }
+        }
+    }
+
+    return $sb.ToString()
+}
+
+function Add-AssetToInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Id,
+
+        [Parameter(Mandatory)]
+        [string]$Type,
+
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('azure', 'graph', 'dataverse', 'sentinel', 'loganalytics', 'teams', 'intune', 'powerplatform', 'copilotstudio', 'vm-guest-management')]
+        [string]$Domain,
+
+        [Parameter()]
+        [string]$Protocol = 'https',
+
+        [Parameter()]
+        [string]$Endpoint,
+
+        [Parameter()]
+        [hashtable]$AuthContextRef,
+
+        [Parameter()]
+        [hashtable]$Properties,
+
+        [Parameter()]
+        [hashtable]$Tags,
+
+        [Parameter()]
+        [string]$ManagedBy,
+
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventory = Get-AssetInventory -InventoryName $InventoryName -BasePath $BasePath
+
+    # Check for duplicate
+    $existing = $inventory.spec.assets | Where-Object { $_.id -eq $Id }
+    if ($existing) {
+        throw "Asset with id '$Id' already exists in inventory. Use Update-AssetInInventory to modify."
+    }
+
+    $asset = @{
+        id = $Id
+        type = $Type
+        name = $Name
+        domain = $Domain
+        protocol = $Protocol
+        endpoint = $Endpoint
+        createdAt = (Get-Date -Format 'o')
+        updatedAt = (Get-Date -Format 'o')
+    }
+
+    if ($AuthContextRef) {
+        $asset.authContextRef = @{
+            tenantId = $AuthContextRef.TenantId
+            environment = $AuthContextRef.Environment
+            authenticationType = $AuthContextRef.AuthenticationType
+            clientId = $AuthContextRef.ClientId
+        }
+    }
+
+    if ($Properties) {
+        $asset.properties = $Properties
+    }
+
+    if ($Tags) {
+        $asset.tags = $Tags
+    }
+
+    if ($ManagedBy) {
+        $asset.managedBy = $ManagedBy
+    }
+
+    $inventory.spec.assets += $asset
+    $inventory.metadata.lastUpdated = (Get-Date -Format 'o')
+
+    Save-AssetInventory -Inventory $inventory -InventoryName $InventoryName -BasePath $BasePath
+
+    return $asset
+}
+
+function Get-AssetFromInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$Id,
+
+        [Parameter()]
+        [string]$Name,
+
+        [Parameter()]
+        [string]$Domain,
+
+        [Parameter()]
+        [hashtable]$Tags,
+
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventory = Get-AssetInventory -InventoryName $InventoryName -BasePath $BasePath
+    $assets = $inventory.spec.assets
+
+    if ($Id) {
+        $assets = $assets | Where-Object { $_.id -eq $Id }
+    }
+
+    if ($Name) {
+        $assets = $assets | Where-Object { $_.Item('name') -like "*$Name*" }
+    }
+
+    if ($Domain) {
+        $assets = $assets | Where-Object { $_.domain -eq $Domain }
+    }
+
+    if ($Tags) {
+        foreach ($tagKey in $Tags.Keys) {
+            $assets = $assets | Where-Object {
+                $_.tags -and $_.tags[$tagKey] -eq $Tags[$tagKey]
+            }
+        }
+    }
+
+    return $assets
+}
+
+function Update-AssetInInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Id,
+
+        [Parameter()]
+        [hashtable]$Properties,
+
+        [Parameter()]
+        [hashtable]$Tags,
+
+        [Parameter()]
+        [string]$ManagedBy,
+
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventory = Get-AssetInventory -InventoryName $InventoryName -BasePath $BasePath
+    $asset = $inventory.spec.assets | Where-Object { $_.id -eq $Id } | Select-Object -First 1
+
+    if (-not $asset) {
+        throw "Asset with id '$Id' not found in inventory."
+    }
+
+    if ($Properties) {
+        if (-not $asset.properties) {
+            $asset.properties = @{}
+        }
+        foreach ($key in $Properties.Keys) {
+            $asset.properties[$key] = $Properties[$key]
+        }
+    }
+
+    if ($Tags) {
+        if (-not $asset.tags) {
+            $asset.tags = @{}
+        }
+        foreach ($key in $Tags.Keys) {
+            $asset.tags[$key] = $Tags[$key]
+        }
+    }
+
+    if ($ManagedBy) {
+        $asset.managedBy = $ManagedBy
+    }
+
+    $asset.updatedAt = (Get-Date -Format 'o')
+    $inventory.metadata.lastUpdated = (Get-Date -Format 'o')
+
+    Save-AssetInventory -Inventory $inventory -InventoryName $InventoryName -BasePath $BasePath
+
+    return $asset
+}
+
+function Remove-AssetFromInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Id,
+
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventory = Get-AssetInventory -InventoryName $InventoryName -BasePath $BasePath
+    $beforeCount = $inventory.spec.assets.Count
+
+    $inventory.spec.assets = $inventory.spec.assets | Where-Object { $_.id -ne $Id }
+
+    if ($inventory.spec.assets.Count -eq $beforeCount) {
+        throw "Asset with id '$Id' not found in inventory."
+    }
+
+    $inventory.metadata.lastUpdated = (Get-Date -Format 'o')
+
+    Save-AssetInventory -Inventory $inventory -InventoryName $InventoryName -BasePath $BasePath
+}
+
+function Save-AssetInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Inventory,
+
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventoryPath = Get-AssetInventoryPath -InventoryName $InventoryName -BasePath $BasePath
+    $yaml = ConvertTo-AssetInventoryYaml -Inventory $Inventory
+    Set-Content -Path $inventoryPath -Value $yaml -Encoding UTF8 -ErrorAction Stop
+}
+
+function Test-AssetInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$InventoryName = 'inventory',
+
+        [Parameter()]
+        [string]$BasePath = './assets'
+    )
+
+    $inventoryPath = Get-AssetInventoryPath -InventoryName $InventoryName -BasePath $BasePath
+
+    if (-not (Test-Path $inventoryPath)) {
+        Write-Warning "Asset inventory not found at $inventoryPath"
+        return $false
+    }
+
+    try {
+        $inventory = Get-AssetInventory -InventoryName $InventoryName -BasePath $BasePath
+
+        if (-not $inventory.spec.assets) {
+            Write-Warning "Inventory has no assets section."
+            return $false
+        }
+
+        $valid = $true
+        $requiredFields = @('id', 'type', 'name', 'domain')
+
+        for ($i = 0; $i -lt $inventory.spec.assets.Count; $i++) {
+            $asset = $inventory.spec.assets[$i]
+            foreach ($field in $requiredFields) {
+                if (-not $asset[$field]) {
+                    Write-Warning "Asset at index $i is missing required field: $field"
+                    $valid = $false
+                }
+            }
+        }
+
+        return $valid
+    }
+    catch {
+        Write-Warning "Failed to validate inventory: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Export module members
 # ---------------------------------------------------------------------------
 Export-ModuleMember -Function @(
@@ -560,4 +1057,12 @@ Export-ModuleMember -Function @(
     "Load-DotEnv"
     "Get-ProfileSettings"
     "Get-PrefixedEnvironmentVariable"
+    "Get-AssetInventory"
+    "Get-AssetInventoryPath"
+    "Add-AssetToInventory"
+    "Get-AssetFromInventory"
+    "Update-AssetInInventory"
+    "Remove-AssetFromInventory"
+    "Test-AssetInventory"
+    "Save-AssetInventory"
 )

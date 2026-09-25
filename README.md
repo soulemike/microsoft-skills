@@ -2,7 +2,7 @@
 
 [![PowerShell 7.2+](https://img.shields.io/badge/PowerShell-7.2+-blue?logo=powershell)](https://docs.microsoft.com/powershell/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/soulemike/microsoft-skills/badge)](https://scorecard.dev/viewer/?uri=github.com/soulemike/microsoft-skills)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/cloud-api-skills/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/cloud-api-skills)
 
 ![Microsoft Cloud API Skills](header.png)
 
@@ -235,7 +235,7 @@ $gov  = ./skills/graph/Connect-GraphApi.ps1 -Prefix "GOV" -Environment AzureUSGo
 ├── mcp/                                  # MCP server for agent integration
 │   └── README.md                         # MCP server setup guide
 ├── .env.example                          # Environment variable template
-├── config.yaml                           # Example multi-tenant configuration
+├── config.example.yaml                    # Example multi-tenant configuration
 ├── llms.txt                              # Concise agent discovery context
 ├── AGENTS.md                             # Machine-readable agent contract
 └── agents.md                             # Master design specification
@@ -327,7 +327,7 @@ $gov  = ./skills/graph/Connect-GraphApi.ps1 -Prefix "GOV" -Environment AzureUSGo
 $prod = ./skills/graph/Connect-GraphApi.ps1 -Profile "prod" -ConfigPath "./config.yaml"
 ```
 
-See [`docs/multi-tenant-auth.md`](docs/multi-tenant-auth.md) and [`config.yaml`](config.yaml) for details.
+See [`docs/multi-tenant-auth.md`](docs/multi-tenant-auth.md) and [`config.example.yaml`](config.example.yaml) for details.
 
 ---
 

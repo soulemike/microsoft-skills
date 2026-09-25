@@ -1,0 +1,147 @@
+# Asset Inventory Example
+# Copy this file to assets/inventory.yaml and fill in your actual resource IDs.
+# Do NOT commit real resource IDs, workspace names, or tenant information to
+# version control. The assets/ directory is gitignored by default.
+#
+# Use the asset inventory functions from Common.psm1 to manage this file:
+#   Import-Module ./skills/Common.psm1
+#   Add-AssetToInventory -Id "..." -Type "..." -Name "..." -Domain "azure"
+#   Get-AssetFromInventory -Domain "azure" -Tags @{ environment = "prod" }
+#   Update-AssetInInventory -Id "..." -Tags @{ owner = "team-platform" }
+#   Remove-AssetFromInventory -Id "..."
+#   Test-AssetInventory
+---
+apiVersion: v1
+kind: AssetInventory
+metadata:
+  name: my-tenant-assets
+  tenantId: "00000000-0000-0000-0000-000000000000"
+  environment: AzureCloud
+  lastUpdated: "2026-09-25T00:00:00Z"
+spec:
+  assets:
+    # Example: Azure Resource Group
+    - id: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-resource-group"
+      type: Microsoft.Resources/resourceGroups
+      name: my-resource-group
+      domain: azure
+      protocol: https
+      endpoint: https://management.azure.com
+      authContextRef:
+        tenantId: "00000000-0000-0000-0000-000000000000"
+        environment: AzureCloud
+        authenticationType: ManagedIdentity
+        clientId: "00000000-0000-0000-0000-000000000000"
+      properties:
+        location: eastus
+        managedBy: ""
+      tags:
+        environment: production
+        costCenter: "12345"
+      managedBy: ./skills/azure/Invoke-AzureRestMethod.ps1
+      createdAt: "2026-09-25T00:00:00Z"
+      updatedAt: "2026-09-25T00:00:00Z"
+
+    # Example: Log Analytics Workspace
+    - id: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-resource-group/providers/Microsoft.OperationalInsights/workspaces/my-workspace"
+      type: Microsoft.OperationalInsights/workspaces
+      name: my-workspace
+      domain: loganalytics
+      protocol: https
+      endpoint: https://management.azure.com
+      authContextRef:
+        tenantId: "00000000-0000-0000-0000-000000000000"
+        environment: AzureCloud
+        authenticationType: ManagedIdentity
+      properties:
+        location: eastus
+        sku: PerGB2018
+        retentionInDays: "30"
+      tags:
+        environment: production
+        purpose: security-monitoring
+      managedBy: ./skills/loganalytics/New-LogAnalyticsWorkspace.ps1
+      createdAt: "2026-09-25T00:00:00Z"
+      updatedAt: "2026-09-25T00:00:00Z"
+
+    # Example: Microsoft Graph User
+    - id: "00000000-0000-0000-0000-000000000000"
+      type: microsoft.graph.user
+      name: "admin@contoso.com"
+      domain: graph
+      protocol: https
+      endpoint: https://graph.microsoft.com
+      authContextRef:
+        tenantId: "00000000-0000-0000-0000-000000000000"
+        environment: AzureCloud
+        authenticationType: Federated
+      properties:
+        displayName: "Admin User"
+        mail: "admin@contoso.com"
+      tags:
+        role: administrator
+      managedBy: ./skills/graph/Invoke-GraphRequest.ps1
+      createdAt: "2026-09-25T00:00:00Z"
+      updatedAt: "2026-09-25T00:00:00Z"
+
+    # Example: Sentinel Incident
+    - id: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-resource-group/providers/Microsoft.OperationalInsights/workspaces/my-workspace/providers/Microsoft.SecurityInsights/Incidents/00000000-0000-0000-0000-000000000000"
+      type: Microsoft.SecurityInsights/Incidents
+      name: "Suspicious Sign-In"
+      domain: sentinel
+      protocol: https
+      endpoint: https://management.azure.com
+      authContextRef:
+        tenantId: "00000000-0000-0000-0000-000000000000"
+        environment: AzureCloud
+        authenticationType: ManagedIdentity
+      properties:
+        severity: High
+        status: New
+        workspaceName: my-workspace
+      tags:
+        alertSource: EntraID
+        triageStatus: pending
+      managedBy: ./skills/sentinel/Get-SentinelIncident.ps1
+      createdAt: "2026-09-25T00:00:00Z"
+      updatedAt: "2026-09-25T00:00:00Z"
+
+    # Example: Dataverse Environment
+    - id: "https://contoso.crm.dynamics.com"
+      type: Microsoft.Dynamics.CRM.environment
+      name: contoso-prod
+      domain: dataverse
+      protocol: https
+      endpoint: https://contoso.crm.dynamics.com
+      authContextRef:
+        tenantId: "00000000-0000-0000-0000-000000000000"
+        environment: AzureCloud
+        authenticationType: Certificate
+      properties:
+        region: nam
+        version: "9.2"
+      tags:
+        environment: production
+      managedBy: ./skills/dataverse/Connect-DataverseApi.ps1
+      createdAt: "2026-09-25T00:00:00Z"
+      updatedAt: "2026-09-25T00:00:00Z"
+
+    # Example: Power Platform Environment
+    - id: "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/00000000-0000-0000-0000-000000000000"
+      type: Microsoft.BusinessAppPlatform/environments
+      name: contoso-default
+      domain: powerplatform
+      protocol: https
+      endpoint: https://api.bap.microsoft.com
+      authContextRef:
+        tenantId: "00000000-0000-0000-0000-000000000000"
+        environment: AzureCloud
+        authenticationType: ManagedIdentity
+      properties:
+        environmentType: Production
+        region: unitedstates
+      tags:
+        environment: production
+      managedBy: ./skills/powerplatform/Get-PowerPlatformEnvironment.ps1
+      createdAt: "2026-09-25T00:00:00Z"
+      updatedAt: "2026-09-25T00:00:00Z"

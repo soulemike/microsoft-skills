@@ -1,15 +1,35 @@
+# User asset inventories (cloud resource tracking)
+assets/*.yaml
+assets/*.yml
+!assets/*.example.yaml
+!assets/*.example.yml
+
 # Environment files
 .env
 .env.local
 .env.*.local
+.env*
+!.env.example
 
 # Secrets and certificates
 *.pem
 *.key
 *.pfx
 *.cer
+*.p12
+*.crt
+*.der
+*.jks
+*.keystore
 secrets/
 credentials/
+
+# Configuration files (user-specific copies of templates)
+config.yaml
+config.local.yaml
+config.*.yaml
+!config.example.yaml
+local.settings.json
 
 # PowerShell
 *.ps1xml

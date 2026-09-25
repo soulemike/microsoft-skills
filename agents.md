@@ -116,7 +116,7 @@ Each skill is designed as an **independent, composable unit** following PowerShe
 │   ├── competitive-landscape.md          # Competitor and alternative analysis
 │   └── future-considerations.md          # Optional integration opportunities (not in scope)
 ├── .env.example                          # Environment variable template with multi-tenant prefixes
-├── config.yaml                           # Example multi-tenant configuration file
+├── config.example.yaml                   # Example multi-tenant configuration file
 ├── README.md                             # Project overview, quickstart, file map
 └── agents.md                             # This file — master index and design specification
 ```

@@ -45,7 +45,7 @@ pwsh -Command "Start-EditorServices"
 
 ## 2. YAML Language Server (Medium Priority)
 
-**Files:** `.yaml`, `.yml` — `config.yaml`
+**Files:** `.yaml`, `.yml` — `config.example.yaml`
 
 Validates schema, catches indentation errors, and ensures the multi-tenant configuration file structure matches expectations.
 

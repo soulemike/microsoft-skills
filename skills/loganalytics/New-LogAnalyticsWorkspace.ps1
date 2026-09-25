@@ -25,12 +25,23 @@
 .PARAMETER AuthContext
     ARM-capable authentication context returned by the project's auth helpers.
 
+.PARAMETER RegisterAsset
+    When specified, registers the workspace in the asset inventory
+    (./assets/inventory.yaml) after creation or retrieval.
+
+.PARAMETER InventoryName
+    Name of the asset inventory file to use when -RegisterAsset is specified.
+    Defaults to 'inventory'.
+
 .OUTPUTS
     Hashtable containing workspace metadata including customerId and
     primarySharedKey.
 
 .EXAMPLE
     ./skills/loganalytics/New-LogAnalyticsWorkspace.ps1 -SubscriptionId $subscriptionId -ResourceGroupName $resourceGroupName -WorkspaceName $workspaceName -Location eastus -AuthContext $armContext
+
+.EXAMPLE
+    ./skills/loganalytics/New-LogAnalyticsWorkspace.ps1 -SubscriptionId $subscriptionId -ResourceGroupName $resourceGroupName -WorkspaceName $workspaceName -Location eastus -AuthContext $armContext -RegisterAsset
 #>
 [CmdletBinding()]
 param(
@@ -52,7 +63,13 @@ param(
 
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [hashtable]$AuthContext
+    [hashtable]$AuthContext,
+
+    [Parameter()]
+    [switch]$RegisterAsset,
+
+    [Parameter()]
+    [string]$InventoryName = 'inventory'
 )
 
 Set-StrictMode -Version Latest
@@ -204,7 +221,7 @@ try {
     $sharedKeysResponse = Invoke-SkillRestMethod -Uri $sharedKeysUri -AuthContext $resolvedAuthContext -Method 'POST'
     $primarySharedKey = Get-ObjectPropertyValue -InputObject $sharedKeysResponse -Name 'primarySharedKey'
 
-    return [ordered]@{
+    $result = [ordered]@{
         WorkspaceName = $workspaceNameResolved
         ResourceId = $workspaceId
         Location = $workspaceLocation
@@ -213,6 +230,32 @@ try {
         ProvisioningState = $provisioningState
         Exists = $workspaceExists
     }
+
+    if ($RegisterAsset) {
+        try {
+            $armEndpoint = (Get-EnvironmentEndpoints -Environment (Get-AuthEnvironment -Context $AuthContext)).Arm.TrimEnd('/')
+            Add-AssetToInventory `
+                -Id $workspaceId `
+                -Type 'Microsoft.OperationalInsights/workspaces' `
+                -Name $workspaceNameResolved `
+                -Domain 'loganalytics' `
+                -Protocol 'https' `
+                -Endpoint $armEndpoint `
+                -AuthContextRef $AuthContext `
+                -Properties @{
+                    location = $workspaceLocation
+                    sku = 'PerGB2018'
+                    customerId = $customerId
+                } `
+                -ManagedBy $PSCommandPath `
+                -InventoryName $InventoryName
+        }
+        catch {
+            Write-Warning "Failed to register workspace in asset inventory: $($_.Exception.Message)"
+        }
+    }
+
+    return $result
 }
 catch {
     $message = "Failed to create or retrieve Log Analytics workspace '$WorkspaceName'. $($_.Exception.Message)"

@@ -80,13 +80,13 @@ $skillsRoot = Join-Path $projectRoot 'skills'
     }
 }
 
-# Test 4: Get-ProfileSettings reads config.yaml
+# Test 4: Get-ProfileSettings reads config.example.yaml
 & {
     try {
         Import-Module (Join-Path $skillsRoot 'Common.psm1') -Force
-        $configPath = Join-Path $projectRoot 'config.yaml'
+        $configPath = Join-Path $projectRoot 'config.example.yaml'
         if (-not (Test-Path $configPath)) {
-            Add-TestResult -Name 'Get-ProfileSettings' -Passed $false -Details 'config.yaml not found'
+            Add-TestResult -Name 'Get-ProfileSettings' -Passed $false -Details 'config.example.yaml not found'
         }
         else {
             $profile = Get-ProfileSettings -ProfileName 'prod' -Path $configPath

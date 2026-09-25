@@ -19,6 +19,7 @@ Your agent can use this toolkit to:
 3. **Run KQL queries** against Log Analytics workspaces
 4. **Deploy and manage** Copilot Studio agents via Dataverse
 5. **Execute VM run commands** and manage SSH keys securely
+6. **Track and manage cloud assets** through standardized inventory scaffolding with protocol, credential, and endpoint metadata
 
 ## Tool Inventory
 
@@ -212,6 +213,7 @@ When adding a new skill:
 |----------|---------|
 | `README.md` | Project overview and quickstart |
 | `llms.txt` | Concise agent discovery context |
+| `docs/asset-tracking.md` | Cloud asset inventory tracking and management |
 | `docs/auth-patterns.md` | Auth method selection guide |
 | `docs/secret-management.md` | Secret hierarchy and handling rules |
 | `docs/multi-tenant-auth.md` | Multi-context session management |
